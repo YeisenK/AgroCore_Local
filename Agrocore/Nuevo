@@ -1,0 +1,1007 @@
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'dart:async';
+import 'dart:math';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF1E1E2C),
+        cardTheme: CardTheme(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          color: const Color(0xFF2A2A40),
+        ),
+      ),
+      home: const DashboardPage(),
+    );
+  }
+}
+
+class DashboardPage extends StatefulWidget {
+  const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  // Simulador de datos en tiempo real
+  Timer? _timer;
+  final Random _random = Random();
+  
+  // Datos iniciales
+  int _activeOrders = 12;
+  int _upcomingDeliveries = 5;
+  double _avgHumidity = 68.0;
+  double _currentTemperature = 24.5;
+  
+  List<FlSpot> _humidityData = [];
+  List<FlSpot> _temperatureData = [];
+  
+  final List<Map<String, dynamic>> _recentOrders = [
+    {
+      "id": 1,
+      "cliente": "Supermercado Oaxaca", 
+      "fecha": "Hoy 10:00 AM", 
+      "estado": "En camino",
+      "productos": "Tomates (50kg), Lechugas (30kg)",
+      "direccion": "Av. Principal 123, Oaxaca"
+    },
+    {
+      "id": 2,
+      "cliente": "Restaurante Istmo", 
+      "fecha": "Hoy 01:30 PM", 
+      "estado": "Preparando",
+      "productos": "Zanahorias (20kg), Cebollas (15kg)",
+      "direccion": "Calle Reforma 456, Istmo"
+    },
+    {
+      "id": 3,
+      "cliente": "Mercado Juárez", 
+      "fecha": "Mañana 09:00 AM", 
+      "estado": "Programado",
+      "productos": "Pepinos (40kg), Pimientos (25kg)",
+      "direccion": "Plaza Central 789, Juárez"
+    },
+  ];
+  
+  final List<Map<String, dynamic>> _alerts = [
+    {
+      "id": 1,
+      "mensaje": "Humedad baja en Invernadero 2", 
+      "nivel": "Alto",
+      "fecha": "Hoy 08:30 AM",
+      "detalles": "La humedad ha bajado al 45%. Se recomienda activar el sistema de riego."
+    },
+    {
+      "id": 2,
+      "mensaje": "Sensor S011 sin reporte", 
+      "nivel": "Medio",
+      "fecha": "Ayer 05:45 PM",
+      "detalles": "El sensor de temperatura en el invernadero 3 no reporta datos desde hace 2 horas."
+    },
+  ];
+
+  // Estado de conexión a BD
+  bool _isConnected = true;
+  String _connectionStatus = "Conectado";
+
+  // Controladores para navegación
+  int _selectedIndex = 0;
+  final PageController _pageController = PageController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar datos del gráfico
+    _initializeChartData();
+    
+    // Simular actualizaciones en tiempo real cada 3 segundos
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _updateData();
+    });
+
+    // Simular cambios de conexión
+    Timer.periodic(const Duration(seconds: 10), (timer) {
+      _simulateConnectionChanges();
+    });
+  }
+
+  void _initializeChartData() {
+    // Generar datos iniciales para las últimas 24 horas
+    for (int i = 0; i < 24; i++) {
+      _humidityData.add(FlSpot(
+        i.toDouble(), 
+        60 + _random.nextDouble() * 20 // Humedad entre 60-80%
+      ));
+      _temperatureData.add(FlSpot(
+        i.toDouble(), 
+        18 + _random.nextDouble() * 12 // Temperatura entre 18-30°C
+      ));
+    }
+  }
+
+  void _updateData() {
+    if (!_isConnected) return;
+    
+    setState(() {
+      // Actualizar KPIs con valores aleatorios (simulando datos reales)
+      _activeOrders = 10 + _random.nextInt(5);
+      _upcomingDeliveries = 3 + _random.nextInt(4);
+      _avgHumidity = 65 + _random.nextDouble() * 10;
+      _currentTemperature = 18 + _random.nextDouble() * 12;
+      
+      // Actualizar datos del gráfico (desplazar datos y agregar nuevo)
+      _humidityData.removeAt(0);
+      _temperatureData.removeAt(0);
+      
+      // Agregar nuevo dato manteniendo el rango de 24 horas
+      final lastX = 23.0; // Siempre mantenemos 24 puntos
+      _humidityData.add(FlSpot(lastX, 60 + _random.nextDouble() * 20));
+      _temperatureData.add(FlSpot(lastX, 18 + _random.nextDouble() * 12));
+      
+      // Renumerar los puntos X para mantener el rango 0-23
+      for (int i = 0; i < 24; i++) {
+        _humidityData[i] = FlSpot(i.toDouble(), _humidityData[i].y);
+        _temperatureData[i] = FlSpot(i.toDouble(), _temperatureData[i].y);
+      }
+      
+      // Simular ocasionalmente nuevas alertas (5% de probabilidad)
+      if (_random.nextDouble() < 0.05) {
+        List<String> alertTypes = [
+          "Humedad crítica en Invernadero ${_random.nextInt(5) + 1}",
+          "Temperatura fuera de rango en Zona ${_random.nextInt(3) + 1}",
+          "Sensor S${_random.nextInt(100).toString().padLeft(3, '0')} sin reporte",
+          "Riego automático activado en Sector ${_random.nextInt(8) + 1}",
+          "Necesidad de fertilizante detectada"
+        ];
+        
+        List<String> levels = ["Bajo", "Medio", "Alto"];
+        
+        _alerts.add({
+          "id": _alerts.length + 1,
+          "mensaje": alertTypes[_random.nextInt(alertTypes.length)],
+          "nivel": levels[_random.nextInt(levels.length)],
+          "fecha": "Hoy ${_random.nextInt(24).toString().padLeft(2, '0')}:${_random.nextInt(60).toString().padLeft(2, '0')}",
+          "detalles": "Esta es una alerta generada automáticamente por el sistema de monitoreo."
+        });
+      }
+      
+      // Simular actualización de estado de pedidos
+      if (_random.nextDouble() < 0.1 && _recentOrders.isNotEmpty) {
+        int index = _random.nextInt(_recentOrders.length);
+        List<String> estados = ["Programado", "Preparando", "En camino", "Entregado"];
+        _recentOrders[index]["estado"] = estados[_random.nextInt(estados.length)];
+      }
+    });
+  }
+
+  void _simulateConnectionChanges() {
+    // Simular cambios de conexión (10% de probabilidad de desconexión)
+    if (_random.nextDouble() < 0.1) {
+      setState(() {
+        _isConnected = !_isConnected;
+        _connectionStatus = _isConnected ? "Conectado" : "Desconectado";
+        
+        if (!_isConnected) {
+          _alerts.add({
+            "id": _alerts.length + 1,
+            "mensaje": "Pérdida de conexión con el servidor",
+            "nivel": "Alto",
+            "fecha": "Ahora",
+            "detalles": "El sistema ha perdido conexión con el servidor principal. Los datos mostrados pueden no estar actualizados."
+          });
+        } else {
+          _alerts.add({
+            "id": _alerts.length + 1,
+            "mensaje": "Conexión restablecida con el servidor",
+            "nivel": "Medio",
+            "fecha": "Ahora",
+            "detalles": "La conexión con el servidor se ha restablecido correctamente. Sincronizando datos..."
+          });
+        }
+      });
+    }
+  }
+
+  void _addNewOrder() {
+    setState(() {
+      List<String> clientes = [
+        "Mercado Central",
+        "Tienda Orgánica",
+        "Distribuidora Verde",
+        "Supermercado Ecológico",
+        "Restaurante La Huerta"
+      ];
+      
+      List<String> horas = [
+        "Hoy 10:00 AM", 
+        "Hoy 02:30 PM", 
+        "Mañana 09:00 AM", 
+        "Mañana 11:45 AM"
+      ];
+      
+      List<String> productos = [
+        "Tomates (30kg), Lechugas (20kg)",
+        "Zanahorias (25kg), Cebollas (15kg)",
+        "Pepinos (40kg), Pimientos (20kg)",
+        "Berenjenas (15kg), Calabacines (25kg)"
+      ];
+      
+      List<String> direcciones = [
+        "Av. Central 123, Ciudad",
+        "Calle Secundaria 456, Pueblo",
+        "Plaza Mayor 789, Villa",
+        "Camino Rural 321, Aldea"
+      ];
+      
+      _recentOrders.insert(0, {
+        "id": _recentOrders.length + 1,
+        "cliente": clientes[_random.nextInt(clientes.length)],
+        "fecha": horas[_random.nextInt(horas.length)],
+        "estado": "Programado",
+        "productos": productos[_random.nextInt(productos.length)],
+        "direccion": direcciones[_random.nextInt(direcciones.length)]
+      });
+    });
+    
+    // Mostrar notificación
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Nuevo pedido agregado a la base de datos"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _resolveAlert(int alertId) {
+    setState(() {
+      _alerts.removeWhere((alert) => alert["id"] == alertId);
+    });
+    
+    // Mostrar notificación
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Alerta marcada como resuelta"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    _pageController.jumpToPage(index);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Dashboard Agricultor - Tiempo Real"),
+        backgroundColor: const Color(0xFF12121D),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _updateData,
+            tooltip: "Actualizar datos",
+          ),
+          IconButton(
+            icon: Icon(_isConnected ? Icons.cloud_done : Icons.cloud_off),
+            onPressed: () {
+              setState(() {
+                _isConnected = !_isConnected;
+                _connectionStatus = _isConnected ? "Conectado" : "Desconectado";
+              });
+            },
+            tooltip: _connectionStatus,
+          ),
+        ],
+      ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        children: [
+          // Página 1: Dashboard principal
+          _buildDashboardPage(),
+          
+          // Página 2: Pedidos
+          _buildOrdersPage(),
+          
+          // Página 3: Alertas
+          _buildAlertsPage(),
+          
+          // Página 4: Configuración
+          _buildSettingsPage(),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Pedidos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.warning),
+            label: 'Alertas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Configuración',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.tealAccent,
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+      ),
+      // Botón para simular conexión a base de datos
+      floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
+        onPressed: _addNewOrder,
+        backgroundColor: Colors.teal,
+        child: const Icon(Icons.add),
+      ) : null,
+    );
+  }
+
+  Widget _buildDashboardPage() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Estado de conexión
+            Row(
+              children: [
+                Icon(
+                  _isConnected ? Icons.cloud_done : Icons.cloud_off,
+                  color: _isConnected ? Colors.green : Colors.red,
+                  size: 16,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  _connectionStatus,
+                  style: TextStyle(
+                    color: _isConnected ? Colors.green : Colors.red,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            
+            /// KPIs en tiempo real
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                KpiCard(
+                  title: "Pedidos activos", 
+                  value: _activeOrders.toString(),
+                  icon: Icons.shopping_cart,
+                ),
+                KpiCard(
+                  title: "Próximas entregas", 
+                  value: _upcomingDeliveries.toString(),
+                  icon: Icons.local_shipping,
+                ),
+                KpiCard(
+                  title: "Humedad Prom.", 
+                  value: "${_avgHumidity.toStringAsFixed(1)}%",
+                  icon: Icons.water_drop,
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Temperatura actual
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildMetricCard(
+                      "Temperatura Actual",
+                      "${_currentTemperature.toStringAsFixed(1)}°C",
+                      Icons.thermostat,
+                      Colors.orangeAccent,
+                    ),
+                    _buildMetricCard(
+                      "Humedad Actual",
+                      "${(_avgHumidity + _random.nextDouble() * 5 - 2.5).toStringAsFixed(1)}%",
+                      Icons.water_drop,
+                      Colors.tealAccent,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            /// Gráfico humedad y temperatura en tiempo real
+            const Text("🌡 Humedad y Temperatura últimas 24h",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 200,
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(show: true),
+                      titlesData: FlTitlesData(
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              // Mostrar etiquetas cada 4 horas
+                              if (value % 4 == 0) {
+                                return Text('${value.toInt()}h');
+                              }
+                              return const Text('');
+                            },
+                          ),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (value, meta) {
+                              return Text(value.toInt().toString());
+                            },
+                          ),
+                        ),
+                      ),
+                      borderData: FlBorderData(show: true),
+                      minX: 0,
+                      maxX: 23,
+                      minY: 0,
+                      maxY: 80,
+                      lineBarsData: [
+                        /// Línea de Humedad
+                        LineChartBarData(
+                          isCurved: true,
+                          spots: _humidityData,
+                          color: Colors.tealAccent,
+                          barWidth: 3,
+                          belowBarData: BarAreaData(show: true, color: Colors.tealAccent.withOpacity(0.1)),
+                        ),
+                        /// Línea de Temperatura
+                        LineChartBarData(
+                          isCurved: true,
+                          spots: _temperatureData,
+                          color: Colors.orangeAccent,
+                          barWidth: 3,
+                          belowBarData: BarAreaData(show: true, color: Colors.orangeAccent.withOpacity(0.1)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// Pedidos recientes
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("📦 Pedidos recientes",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 20),
+                  onPressed: _addNewOrder,
+                  tooltip: "Agregar nuevo pedido",
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _recentOrders.length > 3 ? 3 : _recentOrders.length,
+              itemBuilder: (context, index) {
+                return PedidoTile(
+                  pedido: _recentOrders[index],
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OrderDetailPage(pedido: _recentOrders[index]),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 1;
+                });
+                _pageController.jumpToPage(1);
+              },
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text("Ver todos los pedidos"),
+                  Icon(Icons.arrow_forward, size: 16),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// Alertas activas
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("⚠️ Alertas activas",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.notifications, size: 20),
+                  onPressed: () {
+                    setState(() {
+                      _selectedIndex = 2;
+                    });
+                    _pageController.jumpToPage(2);
+                  },
+                  tooltip: "Ver todas las alertas",
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _alerts.length > 2 ? 2 : _alerts.length,
+              itemBuilder: (context, index) {
+                return AlertTile(
+                  alerta: _alerts[index],
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AlertDetailPage(alerta: _alerts[index]),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOrdersPage() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("📦 Todos los Pedidos",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _recentOrders.length,
+              itemBuilder: (context, index) {
+                return PedidoTile(
+                  pedido: _recentOrders[index],
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OrderDetailPage(pedido: _recentOrders[index]),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAlertsPage() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("⚠️ Todas las Alertas",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _alerts.length,
+              itemBuilder: (context, index) {
+                return AlertTile(
+                  alerta: _alerts[index],
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AlertDetailPage(alerta: _alerts[index]),
+                      ),
+                    );
+                  },
+                  onResolve: () {
+                    _resolveAlert(_alerts[index]["id"]);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsPage() {
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("⚙️ Configuración",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 20),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.cloud, color: Colors.tealAccent),
+              title: const Text("Estado de Conexión"),
+              subtitle: Text(_connectionStatus),
+              trailing: Switch(
+                value: _isConnected,
+                onChanged: (value) {
+                  setState(() {
+                    _isConnected = value;
+                    _connectionStatus = _isConnected ? "Conectado" : "Desconectado";
+                  });
+                },
+                activeColor: Colors.teal,
+              ),
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.notifications, color: Colors.orangeAccent),
+              title: const Text("Notificaciones"),
+              subtitle: const Text("Configurar alertas y notificaciones"),
+              trailing: const Icon(Icons.arrow_forward),
+              onTap: () {
+                // Navegar a configuración de notificaciones
+              },
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.bar_chart, color: Colors.purpleAccent),
+              title: const Text("Preferencias de Gráficos"),
+              subtitle: const Text("Personalizar visualización de datos"),
+              trailing: const Icon(Icons.arrow_forward),
+              onTap: () {
+                // Navegar a configuración de gráficos
+              },
+            ),
+          ),
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.info, color: Colors.blueAccent),
+              title: const Text("Acerca de"),
+              subtitle: const Text("Información de la aplicación"),
+              trailing: const Icon(Icons.arrow_forward),
+              onTap: () {
+                // Navegar a información de la aplicación
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricCard(String title, String value, IconData icon, Color color) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 30),
+        const SizedBox(height: 8),
+        Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+        const SizedBox(height: 4),
+        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+      ],
+    );
+  }
+}
+
+/// Página de detalle de pedido
+class OrderDetailPage extends StatelessWidget {
+  final Map<String, dynamic> pedido;
+  
+  const OrderDetailPage({super.key, required this.pedido});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Pedido #${pedido["id"]}"),
+        backgroundColor: const Color(0xFF12121D),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Cliente: ${pedido["cliente"]}", 
+                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 10),
+                    Text("Fecha de entrega: ${pedido["fecha"]}"),
+                    const SizedBox(height: 10),
+                    Text("Estado: ${pedido["estado"]}"),
+                    const SizedBox(height: 10),
+                    Text("Productos: ${pedido["productos"]}"),
+                    const SizedBox(height: 10),
+                    Text("Dirección: ${pedido["direccion"]}"),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text("Acciones:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                ElevatedButton(
+                  onPressed: () {},
+                  child: const Text("Editar Pedido"),
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  child: const Text("Marcar como Entregado"),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Página de detalle de alerta
+class AlertDetailPage extends StatelessWidget {
+  final Map<String, dynamic> alerta;
+  
+  const AlertDetailPage({super.key, required this.alerta});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Alerta #${alerta["id"]}"),
+        backgroundColor: const Color(0xFF12121D),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Card(
+              color: const Color(0xFF402A2A),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(alerta["mensaje"], 
+                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const SizedBox(height: 10),
+                    Text("Nivel: ${alerta["nivel"]}", style: const TextStyle(color: Colors.white)),
+                    const SizedBox(height: 10),
+                    Text("Fecha: ${alerta["fecha"]}", style: const TextStyle(color: Colors.white70)),
+                    const SizedBox(height: 10),
+                    Text("Detalles: ${alerta["detalles"]}", style: const TextStyle(color: Colors.white70)),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text("Acciones:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                ElevatedButton(
+                  onPressed: () {},
+                  child: const Text("Marcar como Resuelta"),
+                ),
+                ElevatedButton(
+                  onPressed: () {},
+                  child: const Text("Ignorar Alerta"),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Widgets personalizados
+
+class KpiCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  
+  const KpiCard({
+    super.key, 
+    required this.title, 
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Icon(icon, color: Colors.tealAccent),
+              const SizedBox(height: 8),
+              Text(title,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey)),
+              const SizedBox(height: 8),
+              Text(value,
+                  style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.tealAccent)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PedidoTile extends StatelessWidget {
+  final Map<String, dynamic> pedido;
+  final VoidCallback? onTap;
+  
+  const PedidoTile({
+    super.key, 
+    required this.pedido,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Color estadoColor;
+    
+    switch (pedido["estado"]) {
+      case "Programado":
+        estadoColor = Colors.blue;
+        break;
+      case "Preparando":
+        estadoColor = Colors.orange;
+        break;
+      case "En camino":
+        estadoColor = Colors.green;
+        break;
+      case "Entregado":
+        estadoColor = Colors.grey;
+        break;
+      default:
+        estadoColor = Colors.white;
+    }
+    
+    return Card(
+      child: ListTile(
+        title: Text(pedido["cliente"]),
+        subtitle: Text("Entrega: ${pedido["fecha"]}"),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.local_shipping, color: Colors.tealAccent),
+            const SizedBox(height: 4),
+            Text(pedido["estado"], style: TextStyle(color: estadoColor, fontSize: 12)),
+          ],
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+class AlertTile extends StatelessWidget {
+  final Map<String, dynamic> alerta;
+  final VoidCallback? onTap;
+  final VoidCallback? onResolve;
+  
+  const AlertTile({
+    super.key, 
+    required this.alerta,
+    this.onTap,
+    this.onResolve,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    
+    switch (alerta["nivel"]) {
+      case "Alto":
+        color = Colors.redAccent;
+        break;
+      case "Medio":
+        color = Colors.orangeAccent;
+        break;
+      case "Bajo":
+        color = Colors.yellowAccent;
+        break;
+      default:
+        color = Colors.white;
+    }
+    
+    return Card(
+      color: const Color(0xFF402A2A),
+      child: ListTile(
+        leading: Icon(Icons.warning, color: color),
+        title: Text(alerta["mensaje"], style: const TextStyle(color: Colors.white, fontSize: 14)),
+        subtitle: Text("Nivel: ${alerta["nivel"]} - ${alerta["fecha"]}", 
+                      style: TextStyle(color: color, fontSize: 12)),
+        trailing: onResolve != null ? IconButton(
+          icon: Icon(Icons.check_circle, color: Colors.green),
+          onPressed: onResolve,
+          tooltip: "Marcar como resuelta",
+        ) : null,
+        onTap: onTap,
+      ),
+    );
+  }
+}
