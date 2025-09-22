@@ -1,0 +1,94 @@
+# -------------------------
+# Flutter / Dart
+# -------------------------
+.dart_tool/
+.packages
+.pub-cache/
+.flutter-plugins
+.flutter-plugins-dependencies
+.melos_tool/            # si usas melos
+coverage/
+build/
+!.vscode/               # conserva la carpeta si quieres, pero…
+.vscode/*               # …ignora su contenido
+!.vscode/settings.json  # (opcional) conserva settings
+!.vscode/extensions.json
+
+# Bloqueo de dependencias
+# Para APPS puedes ignorar; para PACKAGES publícables NO lo ignores.
+pubspec.lock
+
+# -------------------------
+# Android / Gradle
+# -------------------------
+android/.gradle/
+android/local.properties
+android/**/build/
+**/captures/
+**/*.keystore
+**/*.jks
+# Salidas grandes
+**/*.apk
+**/*.aab
+
+# -------------------------
+# iOS / Xcode
+# -------------------------
+ios/Flutter/ephemeral/
+ios/.symlinks/
+ios/Pods/
+ios/**/DerivedData/
+**/*.pbxuser
+**/*.mode1v3
+**/*.mode2v3
+**/*.perspectivev3
+**/*sync/
+**/*.xcuserstate
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+
+# -------------------------
+# macOS
+# -------------------------
+macos/Flutter/ephemeral/
+macos/Pods/
+macos/**/DerivedData/
+
+# -------------------------
+# Linux
+# -------------------------
+linux/flutter/ephemeral/
+
+# -------------------------
+# Windows
+# -------------------------
+windows/flutter/ephemeral/
+**/*.pdb
+**/*.lib
+**/*.exp
+**/*.dll        # binarios generados
+
+# -------------------------
+# Web
+# -------------------------
+web/.dart_tool/
+web/.sass-cache/
+.webdev/
+
+# -------------------------
+# IDE / Proyectos
+# -------------------------
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code (si prefieres ignorar todo)
+# .vscode/
+
+# -------------------------
+# SO / Otros
+# -------------------------
+.DS_Store
+Thumbs.db
+*.log
