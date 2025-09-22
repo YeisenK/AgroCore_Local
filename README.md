@@ -29,38 +29,71 @@ AgroCore es una aplicación pensada para la gestión de viveros y sistemas agrí
 
 agrocore/
 ├─ lib/
+
 │  ├─ main.dart
+
 │  ├─ dashboards/
+
 │  │  └─ ingeniero_dashboard.dart
+
 │  └─ pages/
+
 │     └─ login.dart
+
 ├─ assets/
+
 │  ├─ images/
+
 │  ├─ fonts/
+
 │  └─ mock/
+
 ├─ web/
+
 │  ├─ index.html
+
 │  ├─ manifest.json
+
 │  └─ icons/
+
 │     ├─ Icon-192.png
+
 │     ├─ Icon-512.png
+
 │     ├─ Icon-maskable-192.png
+
 │     └─ Icon-maskable-512.png
+
 ├─ android/            ← app nativa (Android)
+
 │  └─ app/src/main/...
+
 ├─ ios/                ← app nativa (iOS)
+
 │  └─ Runner/...
+
 ├─ macos/              ← desktop (macOS)
+
 │  └─ Runner/...
+
 ├─ linux/              ← desktop (Linux)
+
 │  └─ runner/...
+
 ├─ windows/            ← desktop (Windows)
+
 │  └─ runner/...
+
 ├─ test/
+
 │  └─ ...
+
 ├─ pubspec.yaml
+
 ├─ analysis_options.yaml
+
 ├─ README.md
+
 └─ .gitignore
 
 
