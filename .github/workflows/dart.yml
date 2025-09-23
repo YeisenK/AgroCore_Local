@@ -13,20 +13,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Instala Flutter (estable)
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
           channel: 'stable'
+          cache: true
 
-      # Instala dependencias
-      - name: Install dependencies
+      - name: flutter pub get
         run: flutter pub get
 
-      # Analiza el código
-      - name: Analyze project source
+      - name: flutter analyze
         run: flutter analyze
 
-      # Corre los tests
-      - name: Run tests
+      - name: flutter test
         run: flutter test
