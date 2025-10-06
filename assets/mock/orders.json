@@ -1,0 +1,37 @@
+[
+  {
+    "id": "ORD-001",
+    "customer": "Maria Gonzalez",
+    "crop": "Tomatoes",
+    "quantity": 150.5,
+    "orderDate": "2024-01-15",
+    "deliveryDate": "2024-01-20",
+    "address": "Main Street 123, Garden City",
+    "status": "delivered",
+    "notes": "Urgent order",
+    "unitPrice": 2.5
+  },
+  {
+    "id": "ORD-002",
+    "customer": "Carlos Lopez",
+    "crop": "Lettuce",
+    "quantity": 80.0,
+    "orderDate": "2024-01-16",
+    "deliveryDate": "2024-01-22",
+    "address": "Central Avenue 456, North Colony",
+    "status": "shipped",
+    "notes": "Pack carefully",
+    "unitPrice": 1.8
+  },
+  {
+    "id": "ORD-003",
+    "customer": "Ana Martinez",
+    "crop": "Carrots",
+    "quantity": 200.0,
+    "orderDate": "2024-01-17",
+    "deliveryDate": "2024-01-25",
+    "address": "South Boulevard 789, East Residential",
+    "status": "inProcess",
+    "unitPrice": 1.2
+  }
+]
