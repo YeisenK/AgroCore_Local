@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Asegúrate de que las rutas sean correctas
 import 'package:main/features/gestion_siembra/models/siembra_model.dart';
 import 'package:main/features/gestion_siembra/repositories/mock_siembra_repository.dart';
 
@@ -21,7 +20,6 @@ class SiembraNotifier extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      // Obtenemos nuestra PROPIA COPIA de la lista desde el repositorio
       _siembras = await _repository.getSiembras();
     } catch (e) {
       print('Error al cargar las siembras: $e');
@@ -31,7 +29,6 @@ class SiembraNotifier extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// **CREATE: (CORREGIDO)**
   Future<void> addSiembra(SiembraModel nuevaSiembra) async {
     try {
       // 1. Le decimos al repositorio que guarde el cambio permanentemente.
@@ -51,7 +48,6 @@ class SiembraNotifier extends ChangeNotifier {
     }
   }
 
-  /// **UPDATE: (CORREGIDO)**
   Future<void> actualizarSiembra(SiembraModel siembraActualizada) async {
     try {
       // 1. Le decimos al repositorio que guarde el cambio.
@@ -70,7 +66,6 @@ class SiembraNotifier extends ChangeNotifier {
     }
   }
 
-  /// **DELETE: (CORREGIDO)**
   Future<void> eliminarSiembra(String id) async {
     try {
       // 1. Le decimos al repositorio que elimine el dato.

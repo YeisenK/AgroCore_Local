@@ -5,9 +5,25 @@ import 'package:provider/provider.dart';
 import 'package:main/core/router/routes.dart';
 import 'package:main/features/gestion_siembra/models/siembra_model.dart';
 import 'package:main/features/gestion_siembra/notifiers/siembra_notifier.dart';
+import 'package:main/features/gestion_siembra/screens/siembra_form_screen.dart';
 
 class SiembraListScreen extends StatelessWidget {
   const SiembraListScreen({super.key});
+
+  void _mostrarFormularioDialogo(
+    BuildContext context, {
+    SiembraModel? siembra,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          // Usamos nuestro widget de formulario como hijo
+          child: SiembraFormScreen(siembra: siembra),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +32,8 @@ class SiembraListScreen extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Gestión de Siembras'),
-            // ... (resto de tu AppBar) ...
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
           ),
           body: notifier.isLoading
               ? const Center(child: CircularProgressIndicator())
@@ -27,13 +44,14 @@ class SiembraListScreen extends StatelessWidget {
                     final siembra = notifier.siembras[index];
                     return _SiembraCard(
                       siembra: siembra,
-                    ); // Tu widget _SiembraCard
+                      onEdit: () =>
+                          _mostrarFormularioDialogo(context, siembra: siembra),
+                    );
                   },
                 ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              // Navega al formulario en MODO CREACIÓN (sin argumentos)
-              Navigator.pushNamed(context, AppRoutes.siembraForm);
+              _mostrarFormularioDialogo(context);
             },
             child: const Icon(Icons.add),
           ),
@@ -43,24 +61,44 @@ class SiembraListScreen extends StatelessWidget {
   }
 }
 
+// --- Widget para cada tarjeta de la lista ---
+
 class _SiembraCard extends StatelessWidget {
   final SiembraModel siembra;
-  const _SiembraCard({required this.siembra});
+  final VoidCallback onEdit;
 
+  const _SiembraCard({required this.siembra, required this.onEdit});
+
+  /// Muestra el diálogo de confirmación para eliminar
   Future<void> _mostrarDialogoConfirmacion(
     BuildContext context,
     SiembraNotifier notifier,
   ) async {
-    // ... (Tu código de diálogo de eliminación aquí) ...
-  }
-
-  // --- CAMBIO CONFIRMADO: Esta es la navegación de edición ---
-  void _navegarAEditar(BuildContext context) {
-    // Navega al formulario en MODO EDICIÓN
-    Navigator.pushNamed(
-      context,
-      AppRoutes.siembraForm,
-      arguments: siembra, // ¡Aquí se pasa la siembra que se va a editar!
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirmar Eliminación'),
+          content: Text(
+            '¿Estás seguro de que deseas eliminar la siembra del lote \'${siembra.lote}\'?',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancelar'),
+              onPressed: () => Navigator.of(dialogContext).pop(),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Eliminar'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                notifier.eliminarSiembra(siembra.id);
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -74,7 +112,11 @@ class _SiembraCard extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: ListTile(
         leading: CircleAvatar(
-          // ... (tu leading) ...
+          backgroundColor: colorScheme.secondaryContainer,
+          child: Icon(
+            Icons.eco_rounded,
+            color: colorScheme.onSecondaryContainer,
+          ),
         ),
         title: Text(siembra.lote, style: textTheme.titleMedium),
         subtitle: Text(
@@ -88,7 +130,7 @@ class _SiembraCard extends StatelessWidget {
           icon: const Icon(Icons.more_vert),
           onSelected: (String result) {
             if (result == 'editar') {
-              _navegarAEditar(context); // Llama a la navegación de edición
+              onEdit();
             } else if (result == 'eliminar') {
               _mostrarDialogoConfirmacion(context, notifier);
             }

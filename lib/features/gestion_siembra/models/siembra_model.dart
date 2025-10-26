@@ -1,6 +1,5 @@
 /// Define la estructura de datos para una siembra.
 class SiembraModel {
-  /// El ID único de la siembra, como String.
   final String id;
   final String lote;
   final String cultivo;
@@ -40,7 +39,6 @@ class SiembraModel {
   }
 
   /// Método que convierte el objeto SiembraModel a un mapa JSON.
-  /// ESTA ES LA FUNCIÓN QUE TE FALTA Y CAUSA EL ERROR.
   Map<String, dynamic> toJson() {
     return {
       'id': id,

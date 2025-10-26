@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-// Rutas de paquete corregidas
 import 'package:main/core/router/routes.dart';
 import 'package:main/features/gestion_siembra/notifiers/siembra_notifier.dart';
 import 'package:main/features/gestion_siembra/repositories/mock_siembra_repository.dart';
@@ -25,23 +24,19 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.dark,
 
-        // 2. Definimos cómo se ve nuestro tema oscuro
         darkTheme: ThemeData(
-          brightness: Brightness.dark, // Importante para el modo oscuro
+          brightness: Brightness.dark,
           useMaterial3: true,
 
-          // Fondo de la app (scaffold)
           scaffoldBackgroundColor: Colors.black,
 
-          // Paleta de colores basada en azul
           colorScheme: ColorScheme.fromSeed(
             seedColor: Colors.blue,
             brightness: Brightness.dark,
           ),
 
-          // Apariencia del AppBar
           appBarTheme: const AppBarTheme(
-            backgroundColor: Colors.black, // Fondo del AppBar
+            backgroundColor: Colors.black,
             foregroundColor: Colors.blue, // Título (letras) del AppBar
           ),
 

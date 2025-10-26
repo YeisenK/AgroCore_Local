@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Asegúrate de que las rutas a tus archivos sean correctas
 import 'package:main/features/gestion_siembra/models/siembra_model.dart';
 import 'package:main/features/gestion_siembra/screens/siembra_list_screen.dart';
 import 'package:main/features/gestion_siembra/screens/siembra_detail_screen.dart';

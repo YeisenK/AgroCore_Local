@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 
-// Ruta de paquete corregida
 import 'package:main/features/gestion_siembra/models/siembra_model.dart';
 
 class SiembraDetailScreen extends StatelessWidget {
