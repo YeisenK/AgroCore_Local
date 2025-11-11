@@ -1,10 +1,7 @@
-// lib/features/gestion_siembra/screens/siembra_detail_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:timeline_tile/timeline_tile.dart';
 
-// Asegúrate de que la ruta a tu modelo sea correcta
 import 'package:main/features/gestion_siembra/models/siembra_model.dart';
 
 class SiembraDetailScreen extends StatelessWidget {
@@ -14,10 +11,7 @@ class SiembraDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        // --- CORRECCIÓN 1: Convertir el 'lote' (int) a String ---
-        title: Text('Lote: ${siembra.lote.toString()}'),
-      ),
+      appBar: AppBar(title: Text('Lote: ${siembra.lote.toString()}')),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
@@ -45,7 +39,6 @@ class SiembraDetailScreen extends StatelessWidget {
           if (siembra.detalles.isEmpty)
             const Text('No hay cultivos registrados en este lote.')
           else
-            // Creamos una mini-lista con los detalles
             Column(
               children: siembra.detalles.map((detalle) {
                 return Card(
@@ -98,7 +91,6 @@ class SiembraDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Widget de ayuda para mostrar filas de detalle (Label: Value)
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -112,7 +104,6 @@ class SiembraDetailScreen extends StatelessWidget {
     );
   }
 
-  /// Widget de ayuda para dibujar cada evento de la línea de tiempo
   Widget _buildTimelineEvent(
     BuildContext context, {
     required String title,

@@ -1,10 +1,7 @@
-// lib/features/gestion_siembra/models/siembra_model.dart
-
-// --- NUEVA CLASE PARA LOS DETALLES ---
 class DetalleSiembraModel {
   final String cultivo;
   final String especificacion;
-  final int cantidad; // Es buena idea añadir la cantidad
+  final int cantidad;
 
   DetalleSiembraModel({
     required this.cultivo,
@@ -12,7 +9,6 @@ class DetalleSiembraModel {
     required this.cantidad,
   });
 
-  // Métodos para convertir desde/hacia JSON
   factory DetalleSiembraModel.fromJson(Map<String, dynamic> json) {
     return DetalleSiembraModel(
       cultivo: json['cultivo'] ?? 'Sin Cultivo',
@@ -30,16 +26,14 @@ class DetalleSiembraModel {
   }
 }
 
-// --- CLASE SiembraModel MODIFICADA ---
 class SiembraModel {
   final String id;
-  final int lote; // El número de lote general
+  final int lote;
   final DateTime fechaSiembra;
   final String tipoRiego;
   final String responsable;
   final List<TimelineEvent> timeline;
 
-  // --- CAMBIO: Ya no hay 'cultivo', ahora hay una LISTA de 'detalles' ---
   final List<DetalleSiembraModel> detalles;
 
   SiembraModel({
@@ -49,7 +43,7 @@ class SiembraModel {
     required this.tipoRiego,
     required this.responsable,
     this.timeline = const [],
-    required this.detalles, // La lista de detalles es ahora requerida
+    required this.detalles,
   });
 
   factory SiembraModel.fromJson(Map<String, dynamic> json) {
@@ -88,7 +82,6 @@ class SiembraModel {
   }
 }
 
-// ... (Tu clase TimelineEvent se queda igual) ...
 class TimelineEvent {
   final String titulo;
   final String descripcion;

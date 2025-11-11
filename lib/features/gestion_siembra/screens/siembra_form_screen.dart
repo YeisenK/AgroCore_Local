@@ -55,7 +55,7 @@ class _SiembraFormScreenState extends State<SiembraFormScreen> {
   }
 
   void _guardarFormulario() {
-    // Validamos los campos generales (Lote, Fecha)
+    // Se validan los campos generales (Lote, Fecha)
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -103,7 +103,6 @@ class _SiembraFormScreenState extends State<SiembraFormScreen> {
     Navigator.of(context).pop();
   }
 
-  /// Función para mostrar el "sub-diálogo" para añadir un cultivo
   void _mostrarDialogoDetalle() async {
     final nuevoDetalle = await showDialog<DetalleSiembraModel>(
       context: context,
@@ -119,13 +118,12 @@ class _SiembraFormScreenState extends State<SiembraFormScreen> {
     }
   }
 
-  /// Función para mostrar el calendario
   Future<void> _seleccionarFecha() async {
     final fecha = await showDatePicker(
       context: context,
       initialDate: _fechaSeleccionada ?? DateTime.now(),
       firstDate: DateTime(2000),
-      lastDate: DateTime.now(), // Restringido a días pasados
+      lastDate: DateTime.now(),
     );
 
     if (fecha != null) {
@@ -155,7 +153,6 @@ class _SiembraFormScreenState extends State<SiembraFormScreen> {
           ),
           const SizedBox(height: 24),
 
-          // --- Formulario Principal (Maestro) ---
           Form(
             key: _formKey,
             child: Column(
@@ -209,7 +206,6 @@ class _SiembraFormScreenState extends State<SiembraFormScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // --- ✅ AQUÍ ESTÁ EL CAMPO DE FECHA QUE FALTABA ---
                 FormField<DateTime>(
                   validator: (value) => (_fechaSeleccionada == null)
                       ? 'Debes seleccionar una fecha'
@@ -254,7 +250,6 @@ class _SiembraFormScreenState extends State<SiembraFormScreen> {
                     );
                   },
                 ),
-                // --- ✅ FIN DEL CAMPO DE FECHA ---
               ],
             ),
           ),
@@ -331,9 +326,6 @@ class _SiembraFormScreenState extends State<SiembraFormScreen> {
     );
   }
 }
-
-// --- WIDGET PARA EL "SUB-DIÁLOGO" DE AÑADIR CULTIVO ---
-// (Este widget se queda igual, no necesita cambios)
 
 class _AddDetalleDialog extends StatefulWidget {
   @override
