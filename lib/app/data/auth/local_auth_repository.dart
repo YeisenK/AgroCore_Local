@@ -50,10 +50,10 @@ class LocalAuthRepository {
     }
 
     if (u == null) {
-      throw Exception('Contraseña incorrecta'); // mismo contrato 401
+      throw Exception('Contraseña incorrecta'); 
     }
     if ((u['is_active'] as int) != 1) {
-      throw Exception('Usuario deshabilitado'); // 403
+      throw Exception('Usuario deshabilitado'); 
     }
 
     final hash = (u['password_hash'] as String);
@@ -73,15 +73,12 @@ ORDER BY r.name
 ''', [uid]);
     final roleList = roles.map((e)=> e['name'].toString()).toList();
 
-    // token offline
     final token = base64Url.encode(utf8.encode('OFFLINE:$uid:${DateTime.now().millisecondsSinceEpoch}'));
 
-    // persistimos token y uid
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_kAccess, token);
     await prefs.setInt(_kUid, uid);
 
-    // update last_login_at
     await d.update('users', {'last_login_at': DateTime.now().toIso8601String()},
       where: 'id = ?', whereArgs: [uid]);
 
@@ -105,7 +102,6 @@ ORDER BY r.name
     };
   }
 
-  /// Emula GET /api/auth/me
   Future<Map<String, dynamic>> me() async {
     await init();
     final prefs = await SharedPreferences.getInstance();
@@ -151,13 +147,10 @@ ORDER BY r.name
     return prefs.getString(_kAccess);
   }
 
-  // Algunos paquetes bcrypt no aceptan "$2y$". Esta función intenta ambas.
   bool _bcryptVerify(String plain, String hash) {
     try {
-      // bcrypt >=1.1.3 suele soportar $2y$
       return BCrypt.checkpw(plain, hash);
     } catch (_) {
-      // fallback reemplazando encabezado
       final fixed = hash.replaceFirst('\$2y\$', '\$2a\$');
       return BCrypt.checkpw(plain, fixed);
     }

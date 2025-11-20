@@ -50,7 +50,6 @@ class AuthController extends ChangeNotifier {
       final me = await repo.me(); // valida y cachea
       final parsed = _parseUser(me);
 
-      // SIN ROLES ⇒ se considera NO autenticado
       if (parsed.roles.isEmpty) {
         await repo.logout();
         currentUser = null;
@@ -86,10 +85,9 @@ class AuthController extends ChangeNotifier {
       }
 
       await repo.login(id: id, password: password);
-      final me = await repo.me(); // valida y cachea
+      final me = await repo.me(); 
       final parsed = _parseUser(me);
 
-      // SIN ROLES ⇒ no autenticar
       if (parsed.roles.isEmpty) throw Exception('Usuario sin roles');
 
       currentUser = parsed;
@@ -98,7 +96,7 @@ class AuthController extends ChangeNotifier {
       debugPrint('[Auth] doLogin OK -> AUTH ${currentUser.toString()}');
       return true;
     } catch (e) {
-      await repo.logout(); // evita estados pegados
+      await repo.logout(); 
       currentUser = null;
       status = AuthStatus.unauthenticated;
       notifyListeners();
@@ -110,27 +108,24 @@ class AuthController extends ChangeNotifier {
   // ---------- Logout ----------
   Future<void> logout() async {
     debugPrint('[Auth] logout()');
-    await repo.logout(); // limpia tokens y cache
+    await repo.logout();
     currentUser = null;
     status = AuthStatus.unauthenticated;
-    notifyListeners();   // vital para que GoRouter redirija
+    notifyListeners();   
   }
 
   // ---------- Home preferido ----------
   String preferredHome() {
     final u = currentUser;
     if (u == null) return '/login';
-    // Si no tienes /panel todavía, puedes redirigir admin a ingeniero temporalmente:
-    if (u.isAdmin) return '/panel'; // o '/dashboard/ingeniero'
+    if (u.isAdmin) return '/panel';
     if (u.isIngeniero) return '/dashboard/ingeniero';
     if (u.isAgricultor) return '/dashboard/agricultor';
-    // Por seguridad, jamás devuelvas un dashboard si no hay rol claro.
     return '/login';
   }
 
   // ---------- Helpers ----------
   UserX _parseUser(Map<String, dynamic> me) {
-    // roles puede venir como ["admin","ingeniero"] o como [{name:"admin"}, ...]
     List<String> roles = const [];
     final r = me['roles'];
     if (r is List) {

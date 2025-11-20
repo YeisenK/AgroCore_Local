@@ -7,7 +7,6 @@ import 'app/data/auth/auth_repository.dart';
 import 'app/data/auth/auth_controller.dart';
 import 'app/router/app_router.dart';
 
-// Estado del ingeniero
 import 'features/dashboard_ingeniero/controllers/engineer_state.dart';
 
 void main() {
@@ -22,10 +21,8 @@ class AgroCoreApp extends StatefulWidget {
 }
 
 class _AgroCoreAppState extends State<AgroCoreApp> {
-  // 🔑 Clave global para el Navigator (GoRouter)
   final _navKey = GlobalKey<NavigatorState>();
 
-  // Instancias únicas compartidas
   late final AuthRepository _repo;
   late final AuthController _auth;
   late final GoRouter _router;
@@ -34,14 +31,11 @@ class _AgroCoreAppState extends State<AgroCoreApp> {
   void initState() {
     super.initState();
 
-    // 1) Instancias únicas (ajusta tu baseUrl)
-    _repo = AuthRepository(baseUrl: 'http://192.168.1.33');
+    _repo = AuthRepository(baseUrl: 'https://real.blocsa.com');
     _auth = AuthController(_repo);
 
-    // 2) Router recibiendo la MISMA instancia de AuthController
     _router = createRouter(_navKey, _auth);
 
-    // 3) Arrancar auth (restaura/valida sesión)
     _auth.bootstrap();
   }
 
@@ -49,11 +43,9 @@ class _AgroCoreAppState extends State<AgroCoreApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        // Reutiliza las mismas instancias (no crees nuevas dentro del provider)
         Provider<AuthRepository>.value(value: _repo),
         ChangeNotifierProvider<AuthController>.value(value: _auth),
 
-        // Estado del Ingeniero (independiente)
         ChangeNotifierProvider<EngineerState>(
           create: (_) {
             final s = EngineerState();

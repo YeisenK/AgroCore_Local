@@ -88,11 +88,9 @@ CREATE TABLE refresh_tokens (
           'password_hash':hash,'is_active':1
         });
 
-        // Map rol -> id
         final roles = await d.query('roles');
         int rid(String n) => roles.firstWhere((r)=>r['name']==n)['id'] as int;
 
-        // Asignaciones
         await d.insert('user_roles', {'user_id': idAgr, 'role_id': rid('agricultor')});
         await d.insert('user_roles', {'user_id': idIng, 'role_id': rid('ingeniero')});
         for (final r in ['admin','ingeniero','agricultor']) {

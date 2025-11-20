@@ -123,7 +123,7 @@ flutter run
 ## Equipo
 
 - Yeisen K. — PM y dashboards  
-- Eduardo — Pedidos  
+- Eduardo — Pedidos  x
 - René — Ubicación y alertas  
 - Sebas — Siembras  
 

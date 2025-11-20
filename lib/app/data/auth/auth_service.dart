@@ -4,7 +4,7 @@ import '../../../app/core/constants/env.dart';
 
 class AuthResult {
   final String token;
-  final String role; // 'ING' | 'AGR' | 'ADMIN'...
+  final String role;
   AuthResult(this.token, this.role);
 }
 
@@ -13,7 +13,6 @@ class AuthService {
   AuthService({http.Client? client}) : _client = client ?? http.Client();
 
   Future<AuthResult> login(String user, String pass) async {
-    // Fallback de pruebas (offline o sin backend listo)
     if (user == 'admin' && pass == 'admin') {
       return AuthResult('DEV_TOKEN_ADMIN', 'ADMIN');
     }

@@ -22,7 +22,6 @@ class AuthRepository {
     return Uri.parse('$base$p');
   }
 
-  /// Login por ID + password (según tu backend).
   Future<LoginTokens> login({
     required int id,
     required String password,
@@ -53,7 +52,6 @@ class AuthRepository {
       rethrow;
     }
 
-    // Si el backend respondió "faltan credenciales" para JSON, reintenta como form
     if (r.statusCode == 400 && r.body.contains('Faltan credenciales')) {
       debugPrint('[AuthRepository] Reintentando como form-urlencoded...');
       final formBody =
@@ -107,18 +105,15 @@ class AuthRepository {
     return LoginTokens(access: access, refresh: refresh);
   }
 
-  /// Devuelve el perfil validando SIEMPRE el token contra el backend.
-  /// Usa cache solo como respaldo si hay token y falla la red.
+
   Future<Map<String, dynamic>> me() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // 1) Debe existir token; si no, no hay sesión
     final token = prefs.getString('access_token');
     if (token == null || token.isEmpty) {
       throw Exception('No hay token almacenado');
     }
 
-    // 2) Valida en backend
     final url = _u('/api/auth/me');
     debugPrint('[AuthRepository] GET $url');
 
@@ -139,7 +134,6 @@ class AuthRepository {
       }
 
       if (r.statusCode == 401) {
-        // Token inválido/expirado -> limpiar todo y fallar
         await prefs.remove('access_token');
         await prefs.remove('refresh_token');
         await prefs.remove('user_json');
@@ -148,25 +142,21 @@ class AuthRepository {
 
       throw Exception('Perfil no disponible: ${r.statusCode} ${r.reasonPhrase}');
     } catch (e) {
-      // 3) Respaldo offline SOLO si hay token y cache disponible
       final cached = prefs.getString('user_json');
       if (cached != null && cached.isNotEmpty) {
         try {
           return jsonDecode(cached) as Map<String, dynamic>;
         } catch (_) {
-          // Cache corrupto: no lo uses
         }
       }
       rethrow;
     }
   }
 
-  /// Logout local + (opcional) aviso al backend.
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('access_token');
 
-    // Opcional: avisar al backend si existe endpoint /logout
     if (token != null && token.isNotEmpty) {
       try {
         final url = _u('/api/auth/logout');
@@ -177,7 +167,6 @@ class AuthRepository {
             )
             .timeout(const Duration(seconds: 2));
       } catch (_) {
-        // Ignorar errores de red aquí; limpieza local es lo importante
       }
     }
 
@@ -186,12 +175,10 @@ class AuthRepository {
     await prefs.remove('user_json');
   }
 
-  /// Fuerza sesión efímera: cada arranque invalida cualquier sesión previa.
-  /// Así, bootstrap() nunca encuentra token y te manda al login.
+
   Future<String?> getStoredAccessToken() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // limpia para que la sesión NO persista entre reinicios.
     final hadToken = prefs.getString('access_token');
     if (hadToken != null && hadToken.isNotEmpty) {
       await prefs.remove('access_token');
@@ -199,7 +186,6 @@ class AuthRepository {
       await prefs.remove('user_json');
     }
 
-    // Siempre responde null para obligar a mostrar login en cada arranque.
     return null;
   }
 

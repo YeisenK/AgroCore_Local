@@ -10,7 +10,6 @@ class AdminPanelHome extends StatelessWidget {
       title: 'Panel',
       actions: [],
       slivers: [
-        // Pon aquí tus secciones del panel general
         SliverToBoxAdapter(child: SizedBox(height: 8)),
       ],
     );

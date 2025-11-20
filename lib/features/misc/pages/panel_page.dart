@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../app/core/widgets/app_shell.dart';
 
-/// Contenedor de página de panel reutilizable.
-/// Envía tus slivers (secciones) y acciones del AppBar.
-/// Úsalo en Ingeniero, Agricultor, Admin, etc.
+
 class PanelPage extends StatelessWidget {
   final String title;
   final List<Widget> actions;
