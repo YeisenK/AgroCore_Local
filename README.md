@@ -54,14 +54,14 @@ IoT sensors: ESP8266, LoRa, Arduino
 
 - Project Structure
 agrocore/
-├─ lib/
-│  ├─ main.dart
-│  ├─ dashboards/
-│  │  └─ engineer_dashboard.dart
-│  └─ pages/
-│     └─ login.dart
-│
-├─ assets/
+├─ lib/ 
+│  ├─ main.dart 
+│  ├─ dashboards/ 
+│  │  └─ engineer_dashboard.dart 
+│  └─ pages/ 
+│     └─ login.dart 
+│ 
+├─ assets/ 
 │  ├─ images/
 │  ├─ fonts/
 │  └─ mock/
