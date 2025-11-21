@@ -1,138 +1,134 @@
-# AgroCore 🌱
+# AgroCore
 
-AgroCore es una aplicación pensada para la gestión de viveros y sistemas agrícolas. La idea es tener en un solo lugar todo lo que un agricultor, ingeniero o técnico necesita: pedidos, siembras, ubicación de plantas y alertas con datos en tiempo real.
+Intelligent management system for nurseries and agricultural operations
 
----
+- Table of Contents
 
-## Funcionalidades
+Overview
 
-- Pedidos → ver, crear y dar seguimiento.  
-- Siembras → registrar y controlar cultivos.  
-- Ubicación de plantas → saber dónde está cada lote.  
-- Alertas → notificaciones basadas en sensores (humedad, temperatura, etc.).  
-- Dashboards → diferentes vistas para clientes, ingenieros y agricultores.  
-- Usuarios/Roles → control de accesos y permisos.  
+Features
 
----
+Technologies
 
-## Tecnologías
+Project Structure
 
-- Flutter / Dart  
-- Provider (estado)  
-- fl_chart (gráficas)  
-- GitHub para el control de versiones  
-- Sensores IoT (ESP8266, LoRa, Arduino)  
+Git Workflow
 
----
+Installation
 
-## Estructura básica
+Team
 
+Roadmap
+
+- Overview
+
+AgroCore is a cross-platform application built with Flutter for comprehensive management of nurseries and agricultural systems.
+It centralizes operations such as crop tracking, order management, plant location, and IoT-based alerts.
+The project follows a modular, scalable architecture optimized for real-time data integration and role-based dashboards.
+
+- Features
+
+Order management: create, edit, and track orders
+
+Crop management: register and monitor crops
+
+Plant location: organize lots and areas
+
+IoT alerts: humidity, temperature, and environmental event notifications
+
+Dashboards: custom views for each user role
+
+User and role system: permissions and access control
+
+- Technologies
+
+Flutter / Dart
+
+Provider (state management)
+
+fl_chart (data visualization)
+
+GitHub (version control)
+
+IoT sensors: ESP8266, LoRa, Arduino
+
+- Project Structure
 agrocore/
 ├─ lib/
-
 │  ├─ main.dart
-
 │  ├─ dashboards/
-
-│  │  └─ ingeniero_dashboard.dart
-
+│  │  └─ engineer_dashboard.dart
 │  └─ pages/
-
 │     └─ login.dart
-
+│
 ├─ assets/
-
 │  ├─ images/
-
 │  ├─ fonts/
-
 │  └─ mock/
-
+│
 ├─ web/
-
 │  ├─ index.html
-
 │  ├─ manifest.json
-
 │  └─ icons/
-
 │     ├─ Icon-192.png
-
 │     ├─ Icon-512.png
-
 │     ├─ Icon-maskable-192.png
-
 │     └─ Icon-maskable-512.png
-
-├─ android/            ← app nativa (Android)
-
-│  └─ app/src/main/...
-
-├─ ios/                ← app nativa (iOS)
-
-│  └─ Runner/...
-
-├─ macos/              ← desktop (macOS)
-
-│  └─ Runner/...
-
-├─ linux/              ← desktop (Linux)
-
-│  └─ runner/...
-
-├─ windows/            ← desktop (Windows)
-
-│  └─ runner/...
-
+│
+├─ android/
+├─ ios/
+├─ macos/
+├─ linux/
+├─ windows/
 ├─ test/
-
-│  └─ ...
-
 ├─ pubspec.yaml
-
 ├─ analysis_options.yaml
-
-├─ README.md
-
 └─ .gitignore
 
+- Git Workflow
 
----
+Branches
 
-## Flujo de trabajo con Git
+main → stable production branch
 
-- main → rama principal estable  
-- dev → integración de features  
-- feature/... → cada módulo en su propia rama  
+dev → integration branch
 
-Reglas rápidas:
-- Hacer PRs a dev, no directo a main.  
-- Commits con prefijo: feat:, fix:, refactor:.  
+feature/... → individual modules and features
 
----
+Rules
 
-## Instalación
+Pull requests must go from feature → dev
 
+No direct commits to main
+
+Commit message conventions: feat:, fix:, refactor:
+
+- Installation
 git clone https://github.com/YeisenK/agrocore.git
 cd agrocore
 flutter pub get
 flutter run
 
----
+- Team
 
-## Equipo
+Yeisen K. — PM & Dashboards
 
-- Yeisen K. — PM y dashboards  
-- Eduardo — Pedidos  x
-- René — Ubicación y alertas  
-- Sebas — Siembras  
+Eduardo — Orders
 
----
+René — Location & Alerts
 
-## Roadmap
+Sebas — Crops
 
-- [ ] Integrar sensores reales  
-- [ ] Notificaciones push  
-- [ ] Reportes en PDF/Excel  
-- [ ] Conexión con Odoo  
-- [ ] IA para predicciones  
+- Roadmap
+
+ Real sensor integration
+
+ Push notifications
+
+ PDF/Excel reports
+
+ Odoo integration
+
+ AI-based predictions
+
+ Advanced engineer dashboard
