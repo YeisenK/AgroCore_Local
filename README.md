@@ -1,138 +1,134 @@
-# AgroCore 🌱
+AgroCore
 
-AgroCore es una aplicación pensada para la gestión de viveros y sistemas agrícolas. La idea es tener en un solo lugar todo lo que un agricultor, ingeniero o técnico necesita: pedidos, siembras, ubicación de plantas y alertas con datos en tiempo real.
+Gestión inteligente para viveros y sistemas agrícolas
 
----
+- Tabla de contenido
 
-## Funcionalidades
+Descripción general
 
-- Pedidos → ver, crear y dar seguimiento.  
-- Siembras → registrar y controlar cultivos.  
-- Ubicación de plantas → saber dónde está cada lote.  
-- Alertas → notificaciones basadas en sensores (humedad, temperatura, etc.).  
-- Dashboards → diferentes vistas para clientes, ingenieros y agricultores.  
-- Usuarios/Roles → control de accesos y permisos.  
+Características
 
----
+Tecnologías
 
-## Tecnologías
+Estructura del proyecto
 
-- Flutter / Dart  
-- Provider (estado)  
-- fl_chart (gráficas)  
-- GitHub para el control de versiones  
-- Sensores IoT (ESP8266, LoRa, Arduino)  
+Flujo de trabajo con Git
 
----
+Instalación y ejecución
 
-## Estructura básica
+Equipo
 
+Roadmap
+
+- Descripción general
+
+AgroCore es una aplicación multiplataforma desarrollada en Flutter para la gestión completa de viveros y operaciones agrícolas.
+Centraliza procesos como siembras, pedidos, localización de plantas y alertas provenientes de sensores IoT.
+El proyecto mantiene una arquitectura modular, escalable y orientada a datos en tiempo real.
+
+- Características
+
+Pedidos: creación, edición y seguimiento.
+
+Siembras: registro y control detallado de cultivos.
+
+Ubicación de plantas: organización por lotes y áreas.
+
+Alertas IoT: notificaciones por humedad, temperatura y otros parámetros.
+
+Dashboards: vistas personalizadas para cada rol.
+
+Usuarios / Roles: permisos y control de accesos.
+
+🛠 Tecnologías
+
+Flutter / Dart
+
+Provider (gestión de estado)
+
+fl_chart (gráficas)
+
+GitHub (control de versiones)
+
+Sensores IoT: ESP8266, LoRa, Arduino
+
+- Estructura del proyecto
 agrocore/
 ├─ lib/
-
 │  ├─ main.dart
-
 │  ├─ dashboards/
-
 │  │  └─ ingeniero_dashboard.dart
-
 │  └─ pages/
-
 │     └─ login.dart
-
+│
 ├─ assets/
-
 │  ├─ images/
-
 │  ├─ fonts/
-
 │  └─ mock/
-
+│
 ├─ web/
-
 │  ├─ index.html
-
 │  ├─ manifest.json
-
 │  └─ icons/
-
 │     ├─ Icon-192.png
-
 │     ├─ Icon-512.png
-
 │     ├─ Icon-maskable-192.png
-
 │     └─ Icon-maskable-512.png
-
-├─ android/            ← app nativa (Android)
-
-│  └─ app/src/main/...
-
-├─ ios/                ← app nativa (iOS)
-
-│  └─ Runner/...
-
-├─ macos/              ← desktop (macOS)
-
-│  └─ Runner/...
-
-├─ linux/              ← desktop (Linux)
-
-│  └─ runner/...
-
-├─ windows/            ← desktop (Windows)
-
-│  └─ runner/...
-
+│
+├─ android/
+├─ ios/
+├─ macos/
+├─ linux/
+├─ windows/
 ├─ test/
-
-│  └─ ...
-
 ├─ pubspec.yaml
-
 ├─ analysis_options.yaml
-
-├─ README.md
-
 └─ .gitignore
 
+- Flujo de trabajo con Git
 
----
+Ramas:
 
-## Flujo de trabajo con Git
+main → producción estable
 
-- main → rama principal estable  
-- dev → integración de features  
-- feature/... → cada módulo en su propia rama  
+dev → integración
 
-Reglas rápidas:
-- Hacer PRs a dev, no directo a main.  
-- Commits con prefijo: feat:, fix:, refactor:.  
+feature/... → cada módulo o funcionalidad
 
----
+Reglas:
 
-## Instalación
+Los PR van de feature → dev
 
+No se trabaja directo en main
+
+Convenciones de commit: feat:, fix:, refactor:
+
+- Instalación y ejecución
 git clone https://github.com/YeisenK/agrocore.git
 cd agrocore
 flutter pub get
 flutter run
 
----
+- Equipo
 
-## Equipo
+Yeisen K. — PM & Dashboards
 
-- Yeisen K. — PM y dashboards  
-- Eduardo — Pedidos  x
-- René — Ubicación y alertas  
-- Sebas — Siembras  
+Eduardo — Pedidos
 
----
+René — Ubicación y alertas
 
-## Roadmap
+Sebas — Siembras
 
-- [ ] Integrar sensores reales  
-- [ ] Notificaciones push  
-- [ ] Reportes en PDF/Excel  
-- [ ] Conexión con Odoo  
-- [ ] IA para predicciones  
+- Roadmap
+
+ Integración con sensores reales
+
+ Notificaciones push
+
+ Exportación PDF / Excel
+
+ Integración con Odoo
+
+ IA para predicciones agrícolas
+
+ Dashboard avanzado para ingenieros
