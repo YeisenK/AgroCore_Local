@@ -43,9 +43,9 @@ GoRouter createRouter(
     initialLocation: '/splash',
     refreshListenable: auth, 
     routes: [
-      GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
-      GoRoute(path: '/login',  builder: (_, __) => const LoginPage()),
-      GoRoute(path: '/403',    builder: (_, __) => const ForbiddenPage()),
+      GoRoute(path: '/splash', builder: (_, _) => const SplashPage()),
+      GoRoute(path: '/login',  builder: (_, _) => const LoginPage()),
+      GoRoute(path: '/403',    builder: (_, _) => const ForbiddenPage()),
 
       // Dashboards
       GoRoute(
