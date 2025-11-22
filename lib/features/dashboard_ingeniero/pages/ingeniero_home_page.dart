@@ -248,7 +248,7 @@ class _ChartCard extends StatelessWidget {
                         getTitlesWidget: (v, m) => Text(
                           v.toInt().toString(),
                           style: t.labelSmall?.copyWith(
-                            color: t.labelSmall?.color?.withOpacity(.8),
+                            color: t.labelSmall?.color,
                             fontSize: 10,
                           ),
                         ),
@@ -389,7 +389,7 @@ class _AlertsCard extends StatelessWidget {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: alertas.length,
-              separatorBuilder: (_, __) => Divider(height: 1, color: divider),
+              separatorBuilder: (_, _) => Divider(height: 1, color: divider),
               itemBuilder: (context, i) {
                 final a = alertas[i];
                 return Container(

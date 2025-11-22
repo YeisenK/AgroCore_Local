@@ -50,26 +50,26 @@ GoRouter createRouter(
       // Dashboards
       GoRoute(
         path: '/dashboard/agricultor',
-        builder: (_, __) => const AgricultorHomePage(),
+        builder: (_, _) => const AgricultorHomePage(),
       ),
       GoRoute(
         path: '/dashboard/ingeniero',
-        builder: (_, __) => const IngenieroHomePage(),
+        builder: (_, _) => const IngenieroHomePage(),
       ),
 
-      GoRoute(path: '/panel', builder: (_, __) => const PanelPage()),
+      GoRoute(path: '/panel', builder: (_, _) => const PanelPage()),
 
       GoRoute(
         path: '/mapeo',
-        builder: (_, __) => const PlantInventoryPage(),
+        builder: (_, _) => const PlantInventoryPage(),
       ),
       GoRoute(
         path: '/siembras',
-        builder: (_, __) => const _SiembrasPage(),
+        builder: (_, _) => const _SiembrasPage(),
       ),
       GoRoute(
         path: '/pos',
-        builder: (_, __) => const _PosPage(),
+        builder: (_, _) => const _PosPage(),
       ),
     ],
     redirect: (context, state) {

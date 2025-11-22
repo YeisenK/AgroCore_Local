@@ -42,7 +42,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
   final List<FlSpot> _temperatureData = [];
 
   // Datos simulados
-  List<Map<String, dynamic>> _recentOrders = [
+  final List<Map<String, dynamic>> _recentOrders = [
     {
       'id': 1,
       'cliente': 'Supermercado Oaxaca',
@@ -72,7 +72,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     },
   ];
 
-  List<Map<String, dynamic>> _alerts = [
+  final List<Map<String, dynamic>> _alerts = [
     {
       'id': 1,
       'mensaje': 'Humedad baja en Invernadero 2',
@@ -543,7 +543,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                             color: Colors.tealAccent,
                             barWidth: 3,
                             belowBarData:
-                                BarAreaData(show: true, color: Colors.tealAccent.withOpacity(0.1)),
+                                BarAreaData(show: true, color: Colors.tealAccent),
                           ),
                           LineChartBarData(
                             isCurved: true,
@@ -551,7 +551,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                             color: Colors.orangeAccent,
                             barWidth: 3,
                             belowBarData:
-                                BarAreaData(show: true, color: Colors.orangeAccent.withOpacity(0.1)),
+                                BarAreaData(show: true, color: Colors.orangeAccent),
                           ),
                         ],
                       ),
