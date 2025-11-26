@@ -45,7 +45,7 @@ class SiembraDetailScreen extends StatelessWidget {
                   elevation: 0,
                   color: Theme.of(
                     context,
-                  ).colorScheme.surfaceVariant.withOpacity(0.5),
+                  ).colorScheme.surfaceContainerHighest,
                   child: ListTile(
                     title: Text(
                       detalle.cultivo,

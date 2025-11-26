@@ -183,7 +183,7 @@ class _SiembraFormScreenState extends State<SiembraFormScreen> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _tipoRiegoSeleccionado,
+                  initialValue: _tipoRiegoSeleccionado,
                   decoration: const InputDecoration(labelText: 'Tipo de Riego'),
                   items: _tiposRiegoDisponibles.map((String tipo) {
                     return DropdownMenuItem<String>(
@@ -369,7 +369,7 @@ class __AddDetalleDialogState extends State<_AddDetalleDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: _cultivoSeleccionado,
+              initialValue: _cultivoSeleccionado,
               decoration: const InputDecoration(labelText: 'Cultivo *'),
               items: _cultivosDisponibles.map((String cultivo) {
                 return DropdownMenuItem<String>(

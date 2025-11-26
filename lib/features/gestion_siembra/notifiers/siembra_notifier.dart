@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'dart:developer';
 import '../models/siembra_model.dart';
 import '../repositories/mock_siembra_repository.dart';
 
@@ -36,7 +36,7 @@ class SiembraNotifier extends ChangeNotifier {
     try {
       _siembras = await _repository.getSiembras();
     } catch (e) {
-      print('Error al cargar las siembras: $e');
+      log('Error al cargar las siembras: $e');
       _siembras = [];
     }
     _isLoading = false;
@@ -49,7 +49,7 @@ class SiembraNotifier extends ChangeNotifier {
       _siembras.add(nuevaSiembra); // Añade a la lista local
       notifyListeners(); // Notifica a la UI
     } catch (e) {
-      print('Error al añadir la siembra: $e');
+      log('Error al añadir la siembra: $e');
     }
   }
 
@@ -65,7 +65,7 @@ class SiembraNotifier extends ChangeNotifier {
         notifyListeners(); // Notifica a la UI
       }
     } catch (e) {
-      print('Error al actualizar la siembra: $e');
+      log('Error al actualizar la siembra: $e');
     }
   }
 
@@ -75,7 +75,7 @@ class SiembraNotifier extends ChangeNotifier {
       _siembras.removeWhere((s) => s.id == id); // Elimina de lista local
       notifyListeners(); // Notifica a la UI
     } catch (e) {
-      print('Error al eliminar la siembra: $e');
+      log('Error al eliminar la siembra: $e');
     }
   }
 }

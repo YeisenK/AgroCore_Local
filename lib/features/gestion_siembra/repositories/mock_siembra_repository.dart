@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
-
+import 'dart:developer';
 import '../models/siembra_model.dart';
 
 class MockSiembraRepository {
@@ -25,7 +25,7 @@ class MockSiembraRepository {
 
       return List<SiembraModel>.from(_cachedSiembras!);
     } catch (e) {
-      print('Error al leer el mock de siembras: $e');
+      log('Error al leer el mock de siembras: $e');
       _cachedSiembras = []; // Inicializa la lista vacía en caso de error
       return [];
     }
@@ -39,7 +39,7 @@ class MockSiembraRepository {
 
     // El repositorio solo añade la siembra que ya viene con ID desde el formulario.
     _cachedSiembras!.add(siembra);
-    print('REPOSITORIO: Siembra añadida al caché.');
+    log('REPOSITORIO: Siembra añadida al caché.');
   }
 
   Future<void> actualizarSiembra(SiembraModel siembra) async {
@@ -51,7 +51,7 @@ class MockSiembraRepository {
     final index = _cachedSiembras!.indexWhere((s) => s.id == siembra.id);
     if (index != -1) {
       _cachedSiembras![index] = siembra;
-      print('REPOSITORIO: Siembra actualizada en caché.');
+      log('REPOSITORIO: Siembra actualizada en caché.');
     }
   }
 
@@ -62,6 +62,6 @@ class MockSiembraRepository {
     }
 
     _cachedSiembras!.removeWhere((s) => s.id == id);
-    print('REPOSITORIO: Siembra eliminada del caché.');
+    log('REPOSITORIO: Siembra eliminada del caché.');
   }
 }

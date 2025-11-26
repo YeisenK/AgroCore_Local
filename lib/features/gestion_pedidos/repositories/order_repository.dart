@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/services.dart';
 import '../models/order_model.dart';
 
@@ -28,17 +29,17 @@ class OrderRepository {
 
   Future<void> addOrder(OrderModel order) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    print('Pedido agregado al repositorio: ${order.id}');
+    log('Pedido agregado al repositorio: ${order.id}');
   }
 
   Future<void> updateOrder(OrderModel order) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    print('Pedido actualizado en repositorio: ${order.id}');
+    log('Pedido actualizado en repositorio: ${order.id}');
   }
 
   Future<void> deleteOrder(String id) async {
     await Future.delayed(const Duration(milliseconds: 300));
-    print('Pedido eliminado del repositorio: $id');
+    log('Pedido eliminado del repositorio: $id');
   }
 
   Future<List<OrderModel>> loadOrdersFromJson() async {
@@ -53,7 +54,7 @@ class OrderRepository {
       
       return orders;
     } catch (e) {
-      print('Error cargando datos desde JSON: $e');
+      log('Error cargando datos desde JSON: $e');
       return getOrders();
     }
   }
