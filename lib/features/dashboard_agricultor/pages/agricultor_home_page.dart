@@ -1,13 +1,7 @@
+import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
 import 'dart:math';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
-
-import '../../../app/core/widgets/kpi_card.dart';
-import '../../../app/core/widgets/pedido_tile.dart';
-import '../../../app/core/widgets/alert_tile.dart';
-import '../../../app/core/widgets/order_detail_page.dart';
-import '../../../app/core/widgets//alert_detail_page.dart';
 
 class AgricultorHomePage extends StatefulWidget {
   const AgricultorHomePage({super.key});
@@ -20,8 +14,8 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
   // Simulador de datos en tiempo real
   Timer? _timer;
   final Random _random = Random();
-
-  // Estados
+  
+  // Estados mejorados
   bool _isLoading = false;
   String? _errorMessage;
   bool _isConnected = true;
@@ -30,23 +24,21 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
   final PageController _pageController = PageController();
   String _selectedOrderFilter = 'Todos';
   double _chartInterval = 4.0;
-
-  // KPIs
+  
+  // Datos iniciales
   int _activeOrders = 12;
   int _upcomingDeliveries = 5;
   double _avgHumidity = 68.0;
   double _currentTemperature = 24.5;
-
-  // Series
+  
   final List<FlSpot> _humidityData = [];
   final List<FlSpot> _temperatureData = [];
-
-  // Datos simulados
-  final List<Map<String, dynamic>> _recentOrders = [
+  
+  List<Map<String, dynamic>> _recentOrders = [
     {
       'id': 1,
-      'cliente': 'Supermercado Oaxaca',
-      'fecha': 'Hoy 10:00 AM',
+      'cliente': 'Supermercado Oaxaca', 
+      'fecha': 'Hoy 10:00 AM', 
       'estado': 'En camino',
       'productos': 'Tomates (50kg), Lechugas (30kg)',
       'direccion': 'Av. Principal 123, Oaxaca',
@@ -54,8 +46,8 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     },
     {
       'id': 2,
-      'cliente': 'Restaurante Istmo',
-      'fecha': 'Hoy 01:30 PM',
+      'cliente': 'Restaurante Istmo', 
+      'fecha': 'Hoy 01:30 PM', 
       'estado': 'Preparando',
       'productos': 'Zanahorias (20kg), Cebollas (15kg)',
       'direccion': 'Calle Reforma 456, Istmo',
@@ -63,19 +55,19 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     },
     {
       'id': 3,
-      'cliente': 'Mercado Juárez',
-      'fecha': 'Mañana 09:00 AM',
+      'cliente': 'Mercado Juárez', 
+      'fecha': 'Mañana 09:00 AM', 
       'estado': 'Programado',
       'productos': 'Pepinos (40kg), Pimientos (25kg)',
       'direccion': 'Plaza Central 789, Juárez',
       'total': '\$890.00'
     },
   ];
-
-  final List<Map<String, dynamic>> _alerts = [
+  
+  List<Map<String, dynamic>> _alerts = [
     {
       'id': 1,
-      'mensaje': 'Humedad baja en Invernadero 2',
+      'mensaje': 'Humedad baja en Invernadero 2', 
       'nivel': 'Alto',
       'fecha': 'Hoy 08:30 AM',
       'detalles': 'La humedad ha bajado al 45%. Se recomienda activar el sistema de riego.',
@@ -83,7 +75,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     },
     {
       'id': 2,
-      'mensaje': 'Sensor S011 sin reporte',
+      'mensaje': 'Sensor S011 sin reporte', 
       'nivel': 'Medio',
       'fecha': 'Ayer 05:45 PM',
       'detalles': 'El sensor de temperatura en el invernadero 3 no reporta datos desde hace 2 horas.',
@@ -91,81 +83,102 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     },
   ];
 
-  // Controladores
+  // Controladores para búsqueda
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _initializeChartData();
+    
+    // Simular actualizaciones en tiempo real cada 3 segundos
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      _updateData();
+    });
 
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) => _updateData());
-    Timer.periodic(const Duration(seconds: 10), (_) => _simulateConnectionChanges());
+    // Simular cambios de conexión
+    Timer.periodic(const Duration(seconds: 10), (timer) {
+      _simulateConnectionChanges();
+    });
   }
 
   void _initializeChartData() {
+    // Generar datos iniciales para las últimas 24 horas
     for (int i = 0; i < 24; i++) {
-      _humidityData.add(FlSpot(i.toDouble(), 60 + _random.nextDouble() * 20));
-      _temperatureData.add(FlSpot(i.toDouble(), 18 + _random.nextDouble() * 12));
+      _humidityData.add(FlSpot(
+        i.toDouble(), 
+        60 + _random.nextDouble() * 20 // Humedad entre 60-80%
+      ));
+      _temperatureData.add(FlSpot(
+        i.toDouble(), 
+        18 + _random.nextDouble() * 12 // Temperatura entre 18-30°C
+      ));
     }
   }
 
   Future<void> _updateData() async {
     if (!_isConnected) return;
-
+    
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-
+    
     try {
+      // Simular delay de API
       await Future.delayed(const Duration(milliseconds: 500));
-
+      
       setState(() {
+        // Actualizar KPIs con valores aleatorios (simulando datos reales)
         _activeOrders = 10 + _random.nextInt(5);
         _upcomingDeliveries = 3 + _random.nextInt(4);
         _avgHumidity = 65 + _random.nextDouble() * 10;
         _currentTemperature = 18 + _random.nextDouble() * 12;
-
+        
+        // Actualizar datos del gráfico (desplazar datos y agregar nuevo)
         if (_humidityData.length >= 24) _humidityData.removeAt(0);
         if (_temperatureData.length >= 24) _temperatureData.removeAt(0);
-
+        
+        // Agregar nuevo dato manteniendo el rango de 24 horas
         const lastX = 23.0;
         _humidityData.add(FlSpot(lastX, 60 + _random.nextDouble() * 20));
         _temperatureData.add(FlSpot(lastX, 18 + _random.nextDouble() * 12));
-
+        
+        // Renumerar los puntos X para mantener el rango 0-23
         for (int i = 0; i < _humidityData.length; i++) {
           _humidityData[i] = FlSpot(i.toDouble(), _humidityData[i].y);
           _temperatureData[i] = FlSpot(i.toDouble(), _temperatureData[i].y);
         }
-
+        
+        // Simular ocasionalmente nuevas alertas (5% de probabilidad)
         if (_random.nextDouble() < 0.05 && _alerts.length < 10) {
-          final alertTypes = [
+          List<String> alertTypes = [
             'Humedad crítica en Invernadero ${_random.nextInt(5) + 1}',
             'Temperatura fuera de rango en Zona ${_random.nextInt(3) + 1}',
             "Sensor S${_random.nextInt(100).toString().padLeft(3, '0')} sin reporte",
             'Riego automático activado en Sector ${_random.nextInt(8) + 1}',
             'Necesidad de fertilizante detectada'
           ];
-          final levels = ['Bajo', 'Medio', 'Alto'];
-
+          
+          List<String> levels = ['Bajo', 'Medio', 'Alto'];
+          
           _alerts.insert(0, {
             'id': DateTime.now().millisecondsSinceEpoch,
             'mensaje': alertTypes[_random.nextInt(alertTypes.length)],
             'nivel': levels[_random.nextInt(levels.length)],
-            'fecha':
-                "Hoy ${_random.nextInt(24).toString().padLeft(2, '0')}:${_random.nextInt(60).toString().padLeft(2, '0')}",
+            'fecha': "Hoy ${_random.nextInt(24).toString().padLeft(2, '0')}:${_random.nextInt(60).toString().padLeft(2, '0')}",
             'detalles': 'Esta es una alerta generada automáticamente por el sistema de monitoreo.',
             'resuelta': false
           });
         }
-
+        
+        // Simular actualización de estado de pedidos
         if (_random.nextDouble() < 0.1 && _recentOrders.isNotEmpty) {
           int index = _random.nextInt(_recentOrders.length);
-          final estados = ['Programado', 'Preparando', 'En camino', 'Entregado'];
+          List<String> estados = ['Programado', 'Preparando', 'En camino', 'Entregado'];
           _recentOrders[index]['estado'] = estados[_random.nextInt(estados.length)];
         }
-
+        
         _isLoading = false;
       });
     } catch (e) {
@@ -177,28 +190,34 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
   }
 
   void _simulateConnectionChanges() {
+    // Simular cambios de conexión (10% de probabilidad de desconexión)
     if (_random.nextDouble() < 0.1) {
       setState(() {
         _isConnected = !_isConnected;
         _connectionStatus = _isConnected ? 'Conectado' : 'Desconectado';
-
-        _alerts.insert(
-          0,
-          {
+        
+        if (!_isConnected) {
+          _alerts.insert(0, {
             'id': DateTime.now().millisecondsSinceEpoch,
-            'mensaje': _isConnected
-                ? 'Conexión restablecida con el servidor'
-                : 'Pérdida de conexión con el servidor',
-            'nivel': _isConnected ? 'Medio' : 'Alto',
+            'mensaje': 'Pérdida de conexión con el servidor',
+            'nivel': 'Alto',
             'fecha': 'Ahora',
-            'detalles': _isConnected
-                ? 'La conexión con el servidor se ha restablecido correctamente. Sincronizando datos...'
-                : 'Se perdió la conexión. Los datos podrían no estar actualizados.',
+            'detalles': 'El sistema ha perdido conexión con el servidor principal. Los datos mostrados pueden no estar actualizados.',
             'resuelta': false
-          },
-        );
+          });
+        } else {
+          _alerts.insert(0, {
+            'id': DateTime.now().millisecondsSinceEpoch,
+            'mensaje': 'Conexión restablecida con el servidor',
+            'nivel': 'Medio',
+            'fecha': 'Ahora',
+            'detalles': 'La conexión con el servidor se ha restablecido correctamente. Sincronizando datos...',
+            'resuelta': false
+          });
+        }
       });
-
+      
+      // Auto-reconexión después de 15 segundos si está desconectado
       if (!_isConnected) {
         Timer(const Duration(seconds: 15), () {
           if (mounted) {
@@ -214,28 +233,42 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
 
   void _addNewOrder() {
     setState(() {
-      final clientes = [
+      List<String> clientes = [
         'Mercado Central',
         'Tienda Orgánica',
         'Distribuidora Verde',
         'Supermercado Ecológico',
         'Restaurante La Huerta'
       ];
-      final horas = ['Hoy 10:00 AM', 'Hoy 02:30 PM', 'Mañana 09:00 AM', 'Mañana 11:45 AM'];
-      final productos = [
+      
+      List<String> horas = [
+        'Hoy 10:00 AM', 
+        'Hoy 02:30 PM', 
+        'Mañana 09:00 AM', 
+        'Mañana 11:45 AM'
+      ];
+      
+      List<String> productos = [
         'Tomates (30kg), Lechugas (20kg)',
         'Zanahorias (25kg), Cebollas (15kg)',
         'Pepinos (40kg), Pimientos (20kg)',
         'Berenjenas (15kg), Calabacines (25kg)'
       ];
-      final direcciones = [
+      
+      List<String> direcciones = [
         'Av. Central 123, Ciudad',
         'Calle Secundaria 456, Pueblo',
         'Plaza Mayor 789, Villa',
         'Camino Rural 321, Aldea'
       ];
-      final totales = ['\$750.00', '\$520.00', '\$980.00', '\$640.00'];
 
+      List<String> totales = [
+        '\$750.00',
+        '\$520.00',
+        '\$980.00',
+        '\$640.00'
+      ];
+      
       _recentOrders.insert(0, {
         'id': DateTime.now().millisecondsSinceEpoch,
         'cliente': clientes[_random.nextInt(clientes.length)],
@@ -246,77 +279,109 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
         'total': totales[_random.nextInt(totales.length)]
       });
     });
-
+    
+    // Mostrar notificación
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Nuevo pedido agregado'), duration: Duration(seconds: 2)),
+      const SnackBar(
+        content: Text('Nuevo pedido agregado a la base de datos'),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
   void _resolveAlert(int alertId) {
     setState(() {
-      final i = _alerts.indexWhere((a) => a['id'] == alertId);
-      if (i != -1) {
-        _alerts[i]['resuelta'] = true;
-        final moved = _alerts.removeAt(i);
-        _alerts.add(moved);
+      final alertIndex = _alerts.indexWhere((alert) => alert['id'] == alertId);
+      if (alertIndex != -1) {
+        _alerts[alertIndex]['resuelta'] = true;
+        // Mover alerta resuelta al final
+        final resolvedAlert = _alerts.removeAt(alertIndex);
+        _alerts.add(resolvedAlert);
       }
     });
+    
+    // Mostrar notificación
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Alerta marcada como resuelta')),
+      const SnackBar(
+        content: Text('Alerta marcada como resuelta'),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
   void _deleteAlert(int alertId) {
-    setState(() => _alerts.removeWhere((a) => a['id'] == alertId));
+    setState(() {
+      _alerts.removeWhere((alert) => alert['id'] == alertId);
+    });
+    
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Alerta eliminada')),
+      const SnackBar(
+        content: Text('Alerta eliminada'),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
   void _onItemTapped(int index) {
-    setState(() => _selectedIndex = index);
+    setState(() {
+      _selectedIndex = index;
+    });
     _pageController.jumpToPage(index);
   }
 
   List<Map<String, dynamic>> get _filteredOrders {
-    if (_selectedOrderFilter == 'Todos') return _recentOrders;
-    return _recentOrders.where((o) => o['estado'] == _selectedOrderFilter).toList();
+    if (_selectedOrderFilter == 'Todos') {
+      return _recentOrders;
+    }
+    return _recentOrders.where((order) => order['estado'] == _selectedOrderFilter).toList();
   }
 
   List<Map<String, dynamic>> get _searchedOrders {
-    final q = _searchController.text.toLowerCase();
-    if (q.isEmpty) return _filteredOrders;
-    return _filteredOrders.where((o) {
-      return o['cliente'].toLowerCase().contains(q) ||
-          o['productos'].toLowerCase().contains(q) ||
-          o['direccion'].toLowerCase().contains(q);
+    final query = _searchController.text.toLowerCase();
+    if (query.isEmpty) {
+      return _filteredOrders;
+    }
+    return _filteredOrders.where((order) {
+      return order['cliente'].toLowerCase().contains(query) ||
+             order['productos'].toLowerCase().contains(query) ||
+             order['direccion'].toLowerCase().contains(query);
     }).toList();
   }
 
   String _convertOrdersToCsv() {
-    final b = StringBuffer()..writeln('ID,Cliente,Fecha,Estado,Productos,Dirección,Total');
-    for (final o in _recentOrders) {
-      b.writeln(
-          '${o['id']},${o['cliente']},${o['fecha']},${o['estado']},"${o['productos']}","${o['direccion']}",${o['total']}');
+    final StringBuffer csv = StringBuffer();
+    csv.writeln('ID,Cliente,Fecha,Estado,Productos,Dirección,Total');
+    
+    for (final order in _recentOrders) {
+      csv.writeln('${order['id']},${order['cliente']},${order['fecha']},'
+          '${order['estado']},"${order['productos']}","${order['direccion']}",${order['total']}');
     }
-    return b.toString();
+    
+    return csv.toString();
   }
 
   void _exportOrders() {
-    final csv = _convertOrdersToCsv();
+    final csvData = _convertOrdersToCsv();
+    // En una aplicación real, aquí usarías share_plus o file_saver
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: const Text('Datos Exportados'),
         content: SingleChildScrollView(
           child: Text(
             'Se han exportado ${_recentOrders.length} pedidos.\n\n'
-            'Pega estos datos en un archivo .csv:\n\n$csv',
+            'Pega estos datos en un archivo .csv:\n\n$csvData',
             style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
         ],
       ),
     );
@@ -335,14 +400,21 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard Agricultor - Tiempo Real'),
-        backgroundColor: const Color(0xFF12121D),
         actions: [
           if (_isLoading)
             const Padding(
               padding: EdgeInsets.all(8.0),
-              child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
             ),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _updateData, tooltip: 'Actualizar datos'),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _updateData,
+            tooltip: 'Actualizar datos',
+          ),
           IconButton(
             icon: Icon(_isConnected ? Icons.cloud_done : Icons.cloud_off),
             onPressed: () {
@@ -364,48 +436,75 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                     children: [
                       const Icon(Icons.error, size: 64, color: Colors.red),
                       const SizedBox(height: 16),
-                      Text(_errorMessage!, textAlign: TextAlign.center),
+                      Text(
+                        _errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16),
+                      ),
                       const SizedBox(height: 16),
-                      ElevatedButton(onPressed: _updateData, child: const Text('Reintentar')),
+                      ElevatedButton(
+                        onPressed: _updateData,
+                        child: const Text('Reintentar'),
+                      ),
                     ],
                   ),
                 )
               : PageView(
                   controller: _pageController,
-                  onPageChanged: (i) => setState(() => _selectedIndex = i),
+                  onPageChanged: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
                   children: [
+                    // Página 1: Dashboard principal
                     _buildDashboardPage(),
+                    
+                    // Página 2: Pedidos
                     _buildOrdersPage(),
+                    
+                    // Página 3: Alertas
                     _buildAlertsPage(),
+                    
+                    // Página 4: Configuración
                     _buildSettingsPage(),
                   ],
                 ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_cart), label: 'Pedidos'),
-          BottomNavigationBarItem(icon: Icon(Icons.warning), label: 'Alertas'),
-          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Configuración'),
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Pedidos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.warning),
+            label: 'Alertas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Configuración',
+          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.tealAccent,
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
       ),
-      floatingActionButton: _selectedIndex == 0
-          ? FloatingActionButton(
-              onPressed: _addNewOrder,
-              backgroundColor: Colors.teal,
-              child: const Icon(Icons.add),
-            )
-          : null,
+      floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
+        onPressed: _addNewOrder,
+        backgroundColor: Colors.teal,
+        child: const Icon(Icons.add),
+      ) : null,
     );
   }
 
-  // ---------- Secciones de páginas ----------
   Widget _buildDashboardPage() {
-    final unresolvedAlerts = _alerts.where((a) => !a['resuelta']).toList();
+    final unresolvedAlerts = _alerts.where((alert) => !alert['resuelta']).toList();
     final recentOrders = _recentOrders.take(3).toList();
 
     return RefreshIndicator(
@@ -413,49 +512,92 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Estado conexión
+              // Estado de conexión
               Row(
                 children: [
-                  Icon(_isConnected ? Icons.cloud_done : Icons.cloud_off,
-                      color: _isConnected ? Colors.green : Colors.red, size: 16),
+                  Icon(
+                    _isConnected ? Icons.cloud_done : Icons.cloud_off,
+                    color: _isConnected ? Colors.green : Colors.red,
+                    size: 16,
+                  ),
                   const SizedBox(width: 5),
-                  Text(_connectionStatus,
-                      style: TextStyle(color: _isConnected ? Colors.green : Colors.red, fontSize: 14)),
+                  Text(
+                    _connectionStatus,
+                    style: TextStyle(
+                      color: _isConnected ? Colors.green : Colors.red,
+                      fontSize: 14,
+                    ),
+                  ),
                   const Spacer(),
-                  Text('Actualizado: ${DateTime.now().toString().substring(11, 19)}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    'Actualizado: ${DateTime.now().toString().substring(11, 19)}',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
-
-              // KPIs responsive
+              
+              /// KPIs en tiempo real - Responsive
               LayoutBuilder(
-                builder: (context, c) {
-                  final kpis = [
-                    KpiCard(title: 'Pedidos activos', value: '$_activeOrders', icon: Icons.shopping_cart),
-                    KpiCard(title: 'Próximas entregas', value: '$_upcomingDeliveries', icon: Icons.local_shipping),
-                    KpiCard(title: 'Humedad Prom.', value: '${_avgHumidity.toStringAsFixed(1)}%', icon: Icons.water_drop),
-                  ];
-                  if (c.maxWidth < 600) {
-                    return Column(children: [
-                      kpis[0], const SizedBox(height: 10),
-                      kpis[1], const SizedBox(height: 10),
-                      kpis[2],
-                    ]);
+                builder: (context, constraints) {
+                  if (constraints.maxWidth < 600) {
+                    return Column(
+                      children: [
+                        KpiCard(
+                          title: 'Pedidos activos', 
+                          value: _activeOrders.toString(),
+                          icon: Icons.shopping_cart,
+                          color: Colors.blueAccent,
+                        ),
+                        const SizedBox(height: 10),
+                        KpiCard(
+                          title: 'Próximas entregas', 
+                          value: _upcomingDeliveries.toString(),
+                          icon: Icons.local_shipping,
+                          color: Colors.greenAccent,
+                        ),
+                        const SizedBox(height: 10),
+                        KpiCard(
+                          title: 'Humedad Prom.', 
+                          value: '${_avgHumidity.toStringAsFixed(1)}%',
+                          icon: Icons.water_drop,
+                          color: Colors.tealAccent,
+                        ),
+                      ],
+                    );
+                  } else {
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        KpiCard(
+                          title: 'Pedidos activos', 
+                          value: _activeOrders.toString(),
+                          icon: Icons.shopping_cart,
+                          color: Colors.blueAccent,
+                        ),
+                        KpiCard(
+                          title: 'Próximas entregas', 
+                          value: _upcomingDeliveries.toString(),
+                          icon: Icons.local_shipping,
+                          color: Colors.greenAccent,
+                        ),
+                        KpiCard(
+                          title: 'Humedad Prom.', 
+                          value: '${_avgHumidity.toStringAsFixed(1)}%',
+                          icon: Icons.water_drop,
+                          color: Colors.tealAccent,
+                        ),
+                      ],
+                    );
                   }
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: kpis,
-                  );
                 },
               ),
               const SizedBox(height: 20),
 
-              // Métricas
+              // Métricas en tiempo real
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -466,11 +608,8 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                         'Temperatura Actual',
                         '${_currentTemperature.toStringAsFixed(1)}°C',
                         Icons.thermostat,
-                        _currentTemperature > 28
-                            ? Colors.redAccent
-                            : _currentTemperature < 20
-                                ? Colors.blueAccent
-                                : Colors.orangeAccent,
+                        _currentTemperature > 28 ? Colors.redAccent : 
+                        _currentTemperature < 20 ? Colors.blueAccent : Colors.orangeAccent,
                       ),
                       _buildMetricCard(
                         'Humedad Actual',
@@ -490,7 +629,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
               ),
               const SizedBox(height: 20),
 
-              // Gráfico
+              /// Gráfico humedad y temperatura en tiempo real
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -512,11 +651,12 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              getTitlesWidget: (v, _) {
-                                if (v % _chartInterval == 0) {
+                              getTitlesWidget: (value, meta) {
+                                // Mostrar etiquetas según el intervalo configurado
+                                if (value % _chartInterval == 0) {
                                   return Padding(
                                     padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text('${v.toInt()}h', style: const TextStyle(fontSize: 10)),
+                                    child: Text('${value.toInt()}h', style: const TextStyle(fontSize: 10)),
                                   );
                                 }
                                 return const Text('');
@@ -526,8 +666,12 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
-                              getTitlesWidget: (v, _) =>
-                                  v % 20 == 0 ? Text(v.toInt().toString(), style: const TextStyle(fontSize: 10)) : const Text(''),
+                              getTitlesWidget: (value, meta) {
+                                if (value % 20 == 0) {
+                                  return Text(value.toInt().toString(), style: const TextStyle(fontSize: 10));
+                                }
+                                return const Text('');
+                              },
                             ),
                           ),
                         ),
@@ -537,21 +681,21 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                         minY: 0,
                         maxY: 80,
                         lineBarsData: [
+                          /// Línea de Humedad
                           LineChartBarData(
                             isCurved: true,
                             spots: _humidityData,
                             color: Colors.tealAccent,
                             barWidth: 3,
-                            belowBarData:
-                                BarAreaData(show: true, color: Colors.tealAccent),
+                            belowBarData: BarAreaData(show: true, color: Colors.tealAccent.withOpacity(0.1)),
                           ),
+                          /// Línea de Temperatura
                           LineChartBarData(
                             isCurved: true,
                             spots: _temperatureData,
                             color: Colors.orangeAccent,
                             barWidth: 3,
-                            belowBarData:
-                                BarAreaData(show: true, color: Colors.orangeAccent),
+                            belowBarData: BarAreaData(show: true, color: Colors.orangeAccent.withOpacity(0.1)),
                           ),
                         ],
                       ),
@@ -559,41 +703,55 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
 
-              // Pedidos recientes
+              /// Pedidos recientes
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('📦 Pedidos recientes',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  IconButton(icon: const Icon(Icons.add, size: 20), onPressed: _addNewOrder),
+                  IconButton(
+                    icon: const Icon(Icons.add, size: 20),
+                    onPressed: _addNewOrder,
+                    tooltip: 'Agregar nuevo pedido',
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
-              ...recentOrders.map((p) => PedidoTile(
-                    pedido: p,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => OrderDetailPage(pedido: p)),
+              ...recentOrders.map((pedido) => PedidoTile(
+                pedido: pedido,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OrderDetailPage(pedido: pedido),
                     ),
-                  )),
+                  );
+                },
+              )).toList(),
               const SizedBox(height: 10),
               if (_recentOrders.length > 3)
                 TextButton(
                   onPressed: () {
-                    setState(() => _selectedIndex = 1);
+                    setState(() {
+                      _selectedIndex = 1;
+                    });
                     _pageController.jumpToPage(1);
                   },
                   child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [Text('Ver todos los pedidos'), Icon(Icons.arrow_forward, size: 16)],
+                    children: [
+                      Text('Ver todos los pedidos'),
+                      Icon(Icons.arrow_forward, size: 16),
+                    ],
                   ),
                 ),
 
               const SizedBox(height: 20),
 
-              // Alertas
+              /// Alertas activas
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -605,26 +763,38 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                     child: IconButton(
                       icon: const Icon(Icons.notifications, size: 20),
                       onPressed: () {
-                        setState(() => _selectedIndex = 2);
+                        setState(() {
+                          _selectedIndex = 2;
+                        });
                         _pageController.jumpToPage(2);
                       },
+                      tooltip: 'Ver todas las alertas',
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              ...unresolvedAlerts.take(2).map((a) => AlertTile(
-                    alerta: a,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => AlertDetailPage(alerta: a)),
+              ...unresolvedAlerts.take(2).map((alerta) => AlertTile(
+                alerta: alerta,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AlertDetailPage(alerta: alerta),
                     ),
-                  )),
+                  );
+                },
+              )).toList(),
               if (unresolvedAlerts.isEmpty)
                 const Card(
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Center(child: Text('No hay alertas activas', style: TextStyle(color: Colors.green))),
+                    child: Center(
+                      child: Text(
+                        'No hay alertas activas',
+                        style: TextStyle(color: Colors.green),
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -964,6 +1134,191 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
         const SizedBox(height: 4),
         Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
       ],
+    );
+  }
+}
+
+class KpiCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
+
+  const KpiCard({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 40),
+              const SizedBox(height: 8),
+              Text(title, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+              const SizedBox(height: 4),
+              Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PedidoTile extends StatelessWidget {
+  final Map<String, dynamic> pedido;
+  final VoidCallback onTap;
+
+  const PedidoTile({
+    super.key,
+    required this.pedido,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Icon(Icons.shopping_bag, color: _getStatusColor(pedido['estado'])),
+        title: Text(pedido['cliente']),
+        subtitle: Text('${pedido['fecha']} - ${pedido['estado']}'),
+        trailing: const Icon(Icons.arrow_forward),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Entregado':
+        return Colors.green;
+      case 'En camino':
+        return Colors.blue;
+      case 'Preparando':
+        return Colors.orange;
+      default:
+        return Colors.grey;
+    }
+  }
+}
+
+class AlertTile extends StatelessWidget {
+  final Map<String, dynamic> alerta;
+  final VoidCallback onTap;
+  final VoidCallback? onResolve;
+  final VoidCallback? onDelete;
+
+  const AlertTile({
+    super.key,
+    required this.alerta,
+    required this.onTap,
+    this.onResolve,
+    this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isResolved = alerta['resuelta'] ?? false;
+    return Card(
+      child: ListTile(
+        leading: Icon(
+          isResolved ? Icons.check_circle : Icons.warning,
+          color: isResolved ? Colors.green : _getAlertColor(alerta['nivel']),
+        ),
+        title: Text(alerta['mensaje']),
+        subtitle: Text('${alerta['fecha']} - Nivel: ${alerta['nivel']}'),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isResolved && onResolve != null)
+              IconButton(
+                icon: const Icon(Icons.check, color: Colors.green),
+                onPressed: onResolve,
+              ),
+            if (onDelete != null)
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.red),
+                onPressed: onDelete,
+              ),
+            const Icon(Icons.arrow_forward),
+          ],
+        ),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  Color _getAlertColor(String nivel) {
+    switch (nivel) {
+      case 'Alto':
+        return Colors.red;
+      case 'Medio':
+        return Colors.orange;
+      default:
+        return Colors.yellow;
+    }
+  }
+}
+
+class OrderDetailPage extends StatelessWidget {
+  final Map<String, dynamic> pedido;
+
+  const OrderDetailPage({super.key, required this.pedido});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Detalle del Pedido')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Cliente: ${pedido['cliente']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Text('Fecha: ${pedido['fecha']}'),
+            Text('Estado: ${pedido['estado']}'),
+            Text('Productos: ${pedido['productos']}'),
+            Text('Dirección: ${pedido['direccion']}'),
+            Text('Total: ${pedido['total']}'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AlertDetailPage extends StatelessWidget {
+  final Map<String, dynamic> alerta;
+
+  const AlertDetailPage({super.key, required this.alerta});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Detalle de Alerta')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Mensaje: ${alerta['mensaje']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Text('Nivel: ${alerta['nivel']}'),
+            Text('Fecha: ${alerta['fecha']}'),
+            Text('Detalles: ${alerta['detalles']}'),
+            Text('Resuelta: ${alerta['resuelta'] ? 'Sí' : 'No'}'),
+          ],
+        ),
+      ),
     );
   }
 }

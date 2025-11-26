@@ -1,19 +1,13 @@
 // app/router/app_router.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-
-
 import '../data/auth/auth_controller.dart';
-
-
 import '../../features/dashboard_agricultor/pages/agricultor_home_page.dart';
 import '../../features/dashboard_ingeniero/pages/ingeniero_home_page.dart';
 import '../../features/panel/pages/panel_page.dart';
 import '../../features/login/login.dart';
 import '../../features/misc/pages/splash_page.dart';
 import '../../features/misc/pages/forbidden_page.dart';
-
-
 import '../../features/mapeo_plantulas/pages/plant_inventory_page.dart';
 
 
