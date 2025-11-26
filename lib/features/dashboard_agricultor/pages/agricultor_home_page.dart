@@ -34,7 +34,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
   final List<FlSpot> _humidityData = [];
   final List<FlSpot> _temperatureData = [];
   
-  List<Map<String, dynamic>> _recentOrders = [
+  final List<Map<String, dynamic>> _recentOrders = [
     {
       'id': 1,
       'cliente': 'Supermercado Oaxaca', 
@@ -64,7 +64,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     },
   ];
   
-  List<Map<String, dynamic>> _alerts = [
+  final List<Map<String, dynamic>> _alerts = [
     {
       'id': 1,
       'mensaje': 'Humedad baja en Invernadero 2', 
@@ -687,7 +687,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                             spots: _humidityData,
                             color: Colors.tealAccent,
                             barWidth: 3,
-                            belowBarData: BarAreaData(show: true, color: Colors.tealAccent.withOpacity(0.1)),
+                            belowBarData: BarAreaData(show: true, color: Colors.tealAccent),
                           ),
                           /// Línea de Temperatura
                           LineChartBarData(
@@ -695,7 +695,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                             spots: _temperatureData,
                             color: Colors.orangeAccent,
                             barWidth: 3,
-                            belowBarData: BarAreaData(show: true, color: Colors.orangeAccent.withOpacity(0.1)),
+                            belowBarData: BarAreaData(show: true, color: Colors.orangeAccent),
                           ),
                         ],
                       ),
@@ -730,7 +730,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                     ),
                   );
                 },
-              )).toList(),
+              )),
               const SizedBox(height: 10),
               if (_recentOrders.length > 3)
                 TextButton(
@@ -784,7 +784,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                     ),
                   );
                 },
-              )).toList(),
+              )),
               if (unresolvedAlerts.isEmpty)
                 const Card(
                   child: Padding(
