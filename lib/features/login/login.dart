@@ -48,29 +48,16 @@ class _LoginPageState extends State<LoginPage> {
     final loading =
         context.watch<AuthController>().status == AuthStatus.loading;
 
-    final inputDecoration = InputDecoration(
-      labelStyle: const TextStyle(color: Colors.white70),
-      hintStyle: const TextStyle(color: Colors.white54),
-      enabledBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Color(0xFF42535B)),
-        borderRadius: BorderRadius.all(Radius.circular(8)),
-      ),
-      focusedBorder: const OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.white70),
-        borderRadius: BorderRadius.all(Radius.circular(8)),
-      ),
-    );
-
     return Scaffold(
-      backgroundColor: const Color(0xFF1F2A30),
+      backgroundColor: cs.surface,
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: Card(
-            color: const Color(0xFF2A343B),
+            color: cs.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: Color(0xFF42535B), width: 1),
+              side: BorderSide(color: cs.outline, width: 1),
             ),
             elevation: 0,
             child: Padding(
@@ -84,31 +71,36 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       'Bienvenido a AgroCore',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFFD9E1E8),
-                          ),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 6),
                     Text(
                       'Ingresa tu ID y contraseña',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFFAEB8BF),
-                          ),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 28),
 
                     // ID FIELD
                     TextFormField(
                       controller: _idCtrl,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: cs.onSurface),
                       textInputAction: TextInputAction.next,
                       keyboardType: TextInputType.number,
                       autofillHints: const [AutofillHints.username],
-                      decoration: inputDecoration.copyWith(
+                      decoration: InputDecoration(
                         labelText: 'ID de usuario',
                         hintText: 'Ejemplo: 10234',
+                        labelStyle: TextStyle(color: cs.onSurfaceVariant),
+                        hintStyle: TextStyle(color: cs.onSurfaceVariant),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: cs.outline),
+                          borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: cs.primary),
+                          borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        ),
                       ),
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
@@ -125,19 +117,29 @@ class _LoginPageState extends State<LoginPage> {
                     // PASSWORD
                     TextFormField(
                       controller: _passCtrl,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: cs.onSurface),
                       obscureText: _obscure,
                       onFieldSubmitted: (_) => _submit(),
                       autofillHints: const [AutofillHints.password],
-                      decoration: inputDecoration.copyWith(
+                      decoration: InputDecoration(
                         labelText: 'Contraseña',
+                        labelStyle: TextStyle(color: cs.onSurfaceVariant),
+                        hintStyle: TextStyle(color: cs.onSurfaceVariant),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: cs.outline),
+                          borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: cs.primary),
+                          borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        ),
                         suffixIcon: IconButton(
                           onPressed: () => setState(() => _obscure = !_obscure),
                           icon: Icon(
                             _obscure
                                 ? Icons.visibility_off
                                 : Icons.visibility,
-                            color: Colors.white70,
+                            color: cs.onSurfaceVariant,
                           ),
                           tooltip: _obscure ? 'Mostrar' : 'Ocultar',
                         ),
@@ -150,7 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                     // BUTTON
                     SizedBox(
                       height: 46,
-                      child: FilledButton(
+                      child: ElevatedButton(
                         onPressed: loading ? null : _submit,
                         child: loading
                             ? const SizedBox(

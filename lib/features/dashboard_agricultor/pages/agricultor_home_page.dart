@@ -261,6 +261,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
   }
 
   // TODO: Implementar función para parsear alertas
+  // ignore: unused_element
   Map<String, dynamic> _parseAlert(Map<String, dynamic> alertData) {
     return {
       'id': alertData['id'],
@@ -280,6 +281,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
+  // ignore: unused_element
   String _translateStatus(String status) {
     // TODO: Mapear estados del backend a textos legibles
     const statusMap = {
@@ -458,7 +460,7 @@ Widget build(BuildContext context) {
     
     return Expanded(
       child: Material(
-        color: isSelected ? colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+        color: isSelected ? colorScheme.primary : Colors.transparent,
         child: InkWell(
           onTap: () => _onItemTapped(index),
           child: Container(
@@ -648,7 +650,7 @@ Widget build(BuildContext context) {
                               barWidth: 3,
                               belowBarData: BarAreaData(
                                 show: true, 
-                                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.3)
+                                color: Theme.of(context).colorScheme.tertiary
                               ),
                             ),
                             LineChartBarData(
@@ -658,7 +660,7 @@ Widget build(BuildContext context) {
                               barWidth: 3,
                               belowBarData: BarAreaData(
                                 show: true, 
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.3)
+                                color: Theme.of(context).colorScheme.primary
                               ),
                             ),
                           ],
