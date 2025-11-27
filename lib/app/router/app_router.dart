@@ -47,7 +47,6 @@ GoRouter createRouter(
       ),
 
       GoRoute(path: '/panel', builder: (_, _) => const PanelPage()),
-
       GoRoute(path: '/mapeo', builder: (_, _) => const PlantInventoryPage()),
       GoRoute(path: '/siembras', builder: (_, _) => const PanelSiembra()),
       GoRoute(path: '/pedidos', builder: (_, _) => const OrdersTablePage()),

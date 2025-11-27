@@ -21,11 +21,11 @@ class PanelPage extends StatelessWidget {
               child: const Text('Entrar como Ingeniero'),
             ),
             ElevatedButton(
-              onPressed: () => context.go('/dashboard/pedidos'),
+              onPressed: () => context.go('/pedidos'),
               child: const Text('Entrar a gestion de pedidos'),
             ),
             ElevatedButton(
-              onPressed: () => context.go('/dashboard/siembras'),
+              onPressed: () => context.go('/siembras'),
               child: const Text('Entrar a gestion de siembras'),
             ),
           ],
