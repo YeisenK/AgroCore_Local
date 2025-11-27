@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'app/data/auth/auth_repository.dart';
 import 'app/data/auth/auth_controller.dart';
 import 'app/router/app_router.dart';
-
+import 'features/gestion_pedidos/providers/order_provider.dart';
 import 'features/dashboard_ingeniero/controllers/engineer_state.dart';
 
 void main() {
@@ -45,13 +45,15 @@ class _AgroCoreAppState extends State<AgroCoreApp> {
       providers: [
         Provider<AuthRepository>.value(value: _repo),
         ChangeNotifierProvider<AuthController>.value(value: _auth),
-
         ChangeNotifierProvider<EngineerState>(
           create: (_) {
             final s = EngineerState();
             s.bootstrap();
             return s;
           },
+        ),
+        ChangeNotifierProvider<OrderProvider>(
+          create: (_) => OrderProvider(),
         ),
       ],
       child: MaterialApp.router(

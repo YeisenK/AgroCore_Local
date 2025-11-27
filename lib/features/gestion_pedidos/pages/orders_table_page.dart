@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/order_model.dart';
 import '../providers/order_provider.dart';
+import '../../../app/data/auth/auth_controller.dart' ;
 import '../widgets/order_table_row.dart';
 import 'create_order_page.dart';
 import 'edit_order_page.dart';
@@ -18,56 +20,52 @@ class _OrdersTablePageState extends State<OrdersTablePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<OrderProvider>(context, listen: false);
-      provider.loadOrders();
+      context.read<OrderProvider>().loadOrders();
     });
   }
 
   void _showOrderDetails(OrderModel order) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: Colors.grey[900],
-      title: Text(
-        'Pedido #${order.id}',
-        style: const TextStyle(color: Colors.white),
-      ),
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildDetailRow('Cliente:', order.customer),
-          _buildDetailRow('Cultivo:', order.crop),
-          _buildDetailRow('Variedad:', order.variety),
-          _buildDetailRow('Cantidad:', '${order.quantity} ${order.unit}'),
-          _buildDetailRow('Fecha Entrega:', _formatDate(order.deliveryDate)),
-          _buildDetailRow('Estado:', order.statusText),
-          if (order.notes != null && order.notes!.isNotEmpty)
-            _buildDetailRow('Notas:', order.notes!),
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.grey[900],
+        title: Text(
+          'Pedido #${order.id}',
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDetailRow('Cliente:', order.customer),
+            _buildDetailRow('Cultivo:', order.crop),
+            _buildDetailRow('Variedad:', order.variety),
+            _buildDetailRow('Cantidad:', '${order.quantity} ${order.unit}'),
+            _buildDetailRow('Entrega:', _formatDate(order.deliveryDate)),
+            _buildDetailRow('Estado:', order.statusText),
+            if (order.notes != null && order.notes!.isNotEmpty)
+              _buildDetailRow('Notas:', order.notes!),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _navigateToEditOrder(order.id);
+            },
+            child: const Text(
+              'Editar',
+              style: TextStyle(color: Color(0xFF00CFC3)),
+            ),
+          ),
         ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Cerrar',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context);
-            _navigateToEditOrder(order.id);
-          },
-          child: const Text(
-            'Editar',
-            style: TextStyle(color: Color(0xFF00CFC3)),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
@@ -85,7 +83,6 @@ class _OrdersTablePageState extends State<OrdersTablePage> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
@@ -97,119 +94,122 @@ class _OrdersTablePageState extends State<OrdersTablePage> {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-  }
+  String _formatDate(DateTime date) =>
+      '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
   void _navigateToCreateOrder() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const CreateOrderPage(),
-      ),
+      MaterialPageRoute(builder: (_) => const CreateOrderPage()),
     );
   }
 
   void _navigateToEditOrder(String orderId) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => EditOrderPage(orderId: orderId),
-      ),
+      MaterialPageRoute(builder: (_) => EditOrderPage(orderId: orderId)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<OrderProvider>();
+    final auth = context.watch<AuthController>();
+    final user = auth.currentUser;
+
+    final canCreate = user!.isAdmin || user.isAgricultor || user.isPedidos;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F1C2E),
-      body: Consumer<OrderProvider>(
-        builder: (context, provider, child) {
-          return Column(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+      body: Column(
+        children: [
+          // Título
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(24, 60, 24, 24),
+            child: const Text(
+              'Pedidos',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          // Encabezado de la tabla
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey[800],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            child: const Row(
+              children: [
+                _TableHeader(text: 'ID', flex: 1),
+                _TableHeader(text: 'Cliente', flex: 2),
+                _TableHeader(text: 'Cultivo', flex: 1),
+                _TableHeader(text: 'Variedad', flex: 1),
+                _TableHeader(text: 'Cantidad', flex: 1),
+                _TableHeader(text: 'Entrega', flex: 1),
+                _TableHeader(text: 'Estado', flex: 1),
+              ],
+            ),
+          ),
+
+          // Tabla
+          Expanded(
+            child: provider.loading
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF00CFC3),
+                    ),
+                  )
+                : provider.orders.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No hay pedidos registrados',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: provider.orders.length,
+                        itemBuilder: (_, index) {
+                          final order = provider.orders[index];
+                          return OrderTableRow(
+                            order: order,
+                            onTap: () => _showOrderDetails(order),
+                          );
+                        },
+                      ),
+          ),
+
+          // Botón Crear Pedido (según rol)
+          if (canCreate)
+            Container(
+              margin: const EdgeInsets.all(24),
+              child: ElevatedButton(
+                onPressed: _navigateToCreateOrder,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00CFC3),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
                 child: const Text(
-                  'Pedidos',
+                  'Crear Pedido',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-                child: const Row(
-                  children: [
-                    _TableHeader(text: 'ID', flex: 1),
-                    _TableHeader(text: 'Cliente', flex: 2),
-                    _TableHeader(text: 'Cultivo', flex: 1),
-                    _TableHeader(text: 'Variedad', flex: 1),
-                    _TableHeader(text: 'Cantidad', flex: 1),
-                    _TableHeader(text: 'Fecha Entrega', flex: 1), // NUEVA COLUMNA
-                    _TableHeader(text: 'Estado', flex: 1),
-                  ],
-                ),
-              ),
-
-              Expanded(
-                child: provider.loading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF00CFC3),
-                        ),
-                      )
-                    : provider.orders.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No hay pedidos registrados',
-                              style: TextStyle(color: Colors.white, fontSize: 18),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: provider.orders.length,
-                            itemBuilder: (context, index) {
-                              final order = provider.orders[index];
-                              return OrderTableRow(
-                                order: order,
-                                onTap: () => _showOrderDetails(order),
-                              );
-                            },
-                          ),
-              ),
-
-              Container(
-                margin: const EdgeInsets.all(24),
-                child: ElevatedButton(
-                  onPressed: _navigateToCreateOrder,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00CFC3),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'Crear Pedido',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+            ),
+        ],
       ),
     );
   }
