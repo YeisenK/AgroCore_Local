@@ -126,8 +126,6 @@ class IngenieroHomePage extends StatelessWidget {
   }
 }
 
-/* ---------- Acción para cambiar de rol ---------- */
-
 class _RoleSwitcherAction extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -146,8 +144,6 @@ return IconButton(
 
   }
 }
-
-/* ---------- Widgets internos ---------- */
 
 class _KpiCard extends StatelessWidget {
   final String title;
@@ -448,15 +444,7 @@ class _SensorsTable extends StatelessWidget {
       ),
       child: Column(
         children: [
-          ListTile(
-            title: Text('Sensores', style: t.titleMedium),
-            subtitle: Text('Estado y última lectura', style: t.bodySmall),
-            trailing: IconButton(
-              tooltip: 'Exportar',
-              onPressed: () {/* exportar csv opcional */},
-              icon: const Icon(Icons.file_download),
-            ),
-          ),
+                                                                   
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(

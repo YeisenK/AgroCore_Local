@@ -17,6 +17,8 @@ class UserX {
   bool get isAdmin => roles.contains('admin');
   bool get isIngeniero => roles.contains('ingeniero');
   bool get isAgricultor => roles.contains('agricultor');
+  bool get isPedidos => roles.contains('pedidos'); 
+
 
   @override
   String toString() => 'UserX(id:$id, email:$email, roles:$roles)';
@@ -29,7 +31,6 @@ class AuthController extends ChangeNotifier {
   AuthStatus status = AuthStatus.unknown;
   UserX? currentUser;
 
-  // ---------- Bootstrap ----------
   Future<void> bootstrap() async {
     status = AuthStatus.loading;
     notifyListeners();
@@ -47,7 +48,7 @@ class AuthController extends ChangeNotifier {
         return;
       }
 
-      final me = await repo.me(); // valida y cachea
+      final me = await repo.me();
       final parsed = _parseUser(me);
 
       if (parsed.roles.isEmpty) {
@@ -72,7 +73,6 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // ---------- Login ----------
   Future<bool> doLogin(String idStr, String password) async {
     status = AuthStatus.loading;
     notifyListeners();
@@ -105,7 +105,6 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  // ---------- Logout ----------
   Future<void> logout() async {
     debugPrint('[Auth] logout()');
     await repo.logout();
@@ -114,7 +113,6 @@ class AuthController extends ChangeNotifier {
     notifyListeners();   
   }
 
-  // ---------- Home preferido ----------
   String preferredHome() {
     final u = currentUser;
     if (u == null) return '/login';
@@ -124,7 +122,6 @@ class AuthController extends ChangeNotifier {
     return '/login';
   }
 
-  // ---------- Helpers ----------
   UserX _parseUser(Map<String, dynamic> me) {
     List<String> roles = const [];
     final r = me['roles'];
