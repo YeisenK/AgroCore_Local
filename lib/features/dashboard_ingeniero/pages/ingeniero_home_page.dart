@@ -30,7 +30,7 @@ class IngenieroHomePage extends StatelessWidget {
         ),
       ],
       slivers: [
-        // KPIs
+        
         SliverToBoxAdapter(
           child: isMobile
               ? Column(
@@ -89,7 +89,6 @@ class IngenieroHomePage extends StatelessWidget {
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-        // Gráfica + Alertas
         SliverToBoxAdapter(
           child: isMobile
               ? Column(

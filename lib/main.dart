@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-
+import 'app/theme/app_theme.dart';
 import 'app/data/auth/auth_repository.dart';
 import 'app/data/auth/auth_controller.dart';
 import 'app/router/app_router.dart';
@@ -59,8 +59,7 @@ class _AgroCoreAppState extends State<AgroCoreApp> {
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         routerConfig: _router,
-        theme: ThemeData.dark(),
-        themeMode: ThemeMode.dark,
+        theme: industrialDarkTheme,
       ),
     );
   }

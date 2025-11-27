@@ -1,7 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:async';
-import 'dart:math';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import '../../../app/core/widgets/app_shell.dart';
+import '../../../app/data/auth/auth_controller.dart';
+
+class _RoleSwitcherAction extends StatelessWidget {
+  const _RoleSwitcherAction();
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthController>();
+    final roles = auth.currentUser?.roles ?? const <String>[];
+
+    if (roles.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return IconButton(
+      tooltip: 'Volver a selección de usuario',
+      icon: const Icon(Icons.switch_account),
+      onPressed: () => context.go(auth.preferredHome()),
+    );
+  }
+}
 
 class AgricultorHomePage extends StatefulWidget {
   const AgricultorHomePage({super.key});
@@ -11,316 +34,319 @@ class AgricultorHomePage extends StatefulWidget {
 }
 
 class _AgricultorHomePageState extends State<AgricultorHomePage> {
-  // Simulador de datos en tiempo real
-  Timer? _timer;
-  final Random _random = Random();
-  
-  // Estados mejorados
+  // Controladores
+  Timer? _refreshTimer;
+  final PageController _pageController = PageController();
+  final TextEditingController _searchController = TextEditingController();
+
+  // Estado
   bool _isLoading = false;
   String? _errorMessage;
-  bool _isConnected = true;
-  String _connectionStatus = 'Conectado';
   int _selectedIndex = 0;
-  final PageController _pageController = PageController();
   String _selectedOrderFilter = 'Todos';
   double _chartInterval = 4.0;
-  
-  // Datos iniciales
-  int _activeOrders = 12;
-  int _upcomingDeliveries = 5;
-  double _avgHumidity = 68.0;
-  double _currentTemperature = 24.5;
+
+  // Datos (inicialmente vacíos - se llenarán desde APIs)
+  int _activeOrders = 0;
+  int _upcomingDeliveries = 0;
+  double _avgHumidity = 0.0;
+  double _currentTemperature = 0.0;
   
   final List<FlSpot> _humidityData = [];
   final List<FlSpot> _temperatureData = [];
-  
-  final List<Map<String, dynamic>> _recentOrders = [
-    {
-      'id': 1,
-      'cliente': 'Supermercado Oaxaca', 
-      'fecha': 'Hoy 10:00 AM', 
-      'estado': 'En camino',
-      'productos': 'Tomates (50kg), Lechugas (30kg)',
-      'direccion': 'Av. Principal 123, Oaxaca',
-      'total': '\$1,250.00'
-    },
-    {
-      'id': 2,
-      'cliente': 'Restaurante Istmo', 
-      'fecha': 'Hoy 01:30 PM', 
-      'estado': 'Preparando',
-      'productos': 'Zanahorias (20kg), Cebollas (15kg)',
-      'direccion': 'Calle Reforma 456, Istmo',
-      'total': '\$650.00'
-    },
-    {
-      'id': 3,
-      'cliente': 'Mercado Juárez', 
-      'fecha': 'Mañana 09:00 AM', 
-      'estado': 'Programado',
-      'productos': 'Pepinos (40kg), Pimientos (25kg)',
-      'direccion': 'Plaza Central 789, Juárez',
-      'total': '\$890.00'
-    },
-  ];
-  
-  final List<Map<String, dynamic>> _alerts = [
-    {
-      'id': 1,
-      'mensaje': 'Humedad baja en Invernadero 2', 
-      'nivel': 'Alto',
-      'fecha': 'Hoy 08:30 AM',
-      'detalles': 'La humedad ha bajado al 45%. Se recomienda activar el sistema de riego.',
-      'resuelta': false
-    },
-    {
-      'id': 2,
-      'mensaje': 'Sensor S011 sin reporte', 
-      'nivel': 'Medio',
-      'fecha': 'Ayer 05:45 PM',
-      'detalles': 'El sensor de temperatura en el invernadero 3 no reporta datos desde hace 2 horas.',
-      'resuelta': false
-    },
-  ];
+  final List<Map<String, dynamic>> _recentOrders = [];
+  final List<Map<String, dynamic>> _alerts = [];
 
-  // Controladores para búsqueda
-  final TextEditingController _searchController = TextEditingController();
+  // Getter para pedidos filtrados y buscados
+  List<Map<String, dynamic>> get _searchedOrders {
+    var filtered = _recentOrders;
+    
+    // Aplicar filtro de estado
+    if (_selectedOrderFilter != 'Todos') {
+      filtered = filtered.where((order) => 
+        order['estado'] == _selectedOrderFilter
+      ).toList();
+    }
+    
+    // Aplicar búsqueda
+    if (_searchController.text.isNotEmpty) {
+      final query = _searchController.text.toLowerCase();
+      filtered = filtered.where((order) =>
+        order['cliente'].toString().toLowerCase().contains(query) ||
+        order['productos'].toString().toLowerCase().contains(query) ||
+        order['estado'].toString().toLowerCase().contains(query)
+      ).toList();
+    }
+    
+    return filtered;
+  }
 
   @override
   void initState() {
     super.initState();
-    _initializeChartData();
+    _loadInitialData();
     
-    // Simular actualizaciones en tiempo real cada 3 segundos
-    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      _updateData();
-    });
-
-    // Simular cambios de conexión
-    Timer.periodic(const Duration(seconds: 10), (timer) {
-      _simulateConnectionChanges();
+    // Configurar actualización automática cada 30 segundos
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _refreshData();
     });
   }
 
-  void _initializeChartData() {
-    // Generar datos iniciales para las últimas 24 horas
-    for (int i = 0; i < 24; i++) {
-      _humidityData.add(FlSpot(
-        i.toDouble(), 
-        60 + _random.nextDouble() * 20 // Humedad entre 60-80%
-      ));
-      _temperatureData.add(FlSpot(
-        i.toDouble(), 
-        18 + _random.nextDouble() * 12 // Temperatura entre 18-30°C
-      ));
-    }
-  }
-
-  Future<void> _updateData() async {
-    if (!_isConnected) return;
-    
+  // Cargar datos iniciales
+  Future<void> _loadInitialData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-    
+
     try {
-      // Simular delay de API
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      setState(() {
-        // Actualizar KPIs con valores aleatorios (simulando datos reales)
-        _activeOrders = 10 + _random.nextInt(5);
-        _upcomingDeliveries = 3 + _random.nextInt(4);
-        _avgHumidity = 65 + _random.nextDouble() * 10;
-        _currentTemperature = 18 + _random.nextDouble() * 12;
-        
-        // Actualizar datos del gráfico (desplazar datos y agregar nuevo)
-        if (_humidityData.length >= 24) _humidityData.removeAt(0);
-        if (_temperatureData.length >= 24) _temperatureData.removeAt(0);
-        
-        // Agregar nuevo dato manteniendo el rango de 24 horas
-        const lastX = 23.0;
-        _humidityData.add(FlSpot(lastX, 60 + _random.nextDouble() * 20));
-        _temperatureData.add(FlSpot(lastX, 18 + _random.nextDouble() * 12));
-        
-        // Renumerar los puntos X para mantener el rango 0-23
-        for (int i = 0; i < _humidityData.length; i++) {
-          _humidityData[i] = FlSpot(i.toDouble(), _humidityData[i].y);
-          _temperatureData[i] = FlSpot(i.toDouble(), _temperatureData[i].y);
-        }
-        
-        // Simular ocasionalmente nuevas alertas (5% de probabilidad)
-        if (_random.nextDouble() < 0.05 && _alerts.length < 10) {
-          List<String> alertTypes = [
-            'Humedad crítica en Invernadero ${_random.nextInt(5) + 1}',
-            'Temperatura fuera de rango en Zona ${_random.nextInt(3) + 1}',
-            "Sensor S${_random.nextInt(100).toString().padLeft(3, '0')} sin reporte",
-            'Riego automático activado en Sector ${_random.nextInt(8) + 1}',
-            'Necesidad de fertilizante detectada'
-          ];
-          
-          List<String> levels = ['Bajo', 'Medio', 'Alto'];
-          
-          _alerts.insert(0, {
-            'id': DateTime.now().millisecondsSinceEpoch,
-            'mensaje': alertTypes[_random.nextInt(alertTypes.length)],
-            'nivel': levels[_random.nextInt(levels.length)],
-            'fecha': "Hoy ${_random.nextInt(24).toString().padLeft(2, '0')}:${_random.nextInt(60).toString().padLeft(2, '0')}",
-            'detalles': 'Esta es una alerta generada automáticamente por el sistema de monitoreo.',
-            'resuelta': false
-          });
-        }
-        
-        // Simular actualización de estado de pedidos
-        if (_random.nextDouble() < 0.1 && _recentOrders.isNotEmpty) {
-          int index = _random.nextInt(_recentOrders.length);
-          List<String> estados = ['Programado', 'Preparando', 'En camino', 'Entregado'];
-          _recentOrders[index]['estado'] = estados[_random.nextInt(estados.length)];
-        }
-        
-        _isLoading = false;
-      });
+      // TODO: Reemplazar con llamadas reales a tus APIs
+      await Future.wait([
+        _loadKPIData(),
+        _loadChartData(),
+        _loadOrdersData(),
+        _loadAlertsData(),
+      ]);
     } catch (e) {
       setState(() {
-        _isLoading = false;
-        _errorMessage = 'Error actualizando datos: $e';
+        _errorMessage = 'Error cargando datos: $e';
       });
-    }
-  }
-
-  void _simulateConnectionChanges() {
-    // Simular cambios de conexión (10% de probabilidad de desconexión)
-    if (_random.nextDouble() < 0.1) {
+    } finally {
       setState(() {
-        _isConnected = !_isConnected;
-        _connectionStatus = _isConnected ? 'Conectado' : 'Desconectado';
-        
-        if (!_isConnected) {
-          _alerts.insert(0, {
-            'id': DateTime.now().millisecondsSinceEpoch,
-            'mensaje': 'Pérdida de conexión con el servidor',
-            'nivel': 'Alto',
-            'fecha': 'Ahora',
-            'detalles': 'El sistema ha perdido conexión con el servidor principal. Los datos mostrados pueden no estar actualizados.',
-            'resuelta': false
-          });
-        } else {
-          _alerts.insert(0, {
-            'id': DateTime.now().millisecondsSinceEpoch,
-            'mensaje': 'Conexión restablecida con el servidor',
-            'nivel': 'Medio',
-            'fecha': 'Ahora',
-            'detalles': 'La conexión con el servidor se ha restablecido correctamente. Sincronizando datos...',
-            'resuelta': false
-          });
-        }
+        _isLoading = false;
       });
-      
-      // Auto-reconexión después de 15 segundos si está desconectado
-      if (!_isConnected) {
-        Timer(const Duration(seconds: 15), () {
-          if (mounted) {
-            setState(() {
-              _isConnected = true;
-              _connectionStatus = 'Conectado';
-            });
-          }
-        });
-      }
     }
   }
 
-  void _addNewOrder() {
-    setState(() {
-      List<String> clientes = [
-        'Mercado Central',
-        'Tienda Orgánica',
-        'Distribuidora Verde',
-        'Supermercado Ecológico',
-        'Restaurante La Huerta'
-      ];
-      
-      List<String> horas = [
-        'Hoy 10:00 AM', 
-        'Hoy 02:30 PM', 
-        'Mañana 09:00 AM', 
-        'Mañana 11:45 AM'
-      ];
-      
-      List<String> productos = [
-        'Tomates (30kg), Lechugas (20kg)',
-        'Zanahorias (25kg), Cebollas (15kg)',
-        'Pepinos (40kg), Pimientos (20kg)',
-        'Berenjenas (15kg), Calabacines (25kg)'
-      ];
-      
-      List<String> direcciones = [
-        'Av. Central 123, Ciudad',
-        'Calle Secundaria 456, Pueblo',
-        'Plaza Mayor 789, Villa',
-        'Camino Rural 321, Aldea'
-      ];
+  // Actualizar datos
+  Future<void> _refreshData() async {
+    if (_isLoading) return;
 
-      List<String> totales = [
-        '\$750.00',
-        '\$520.00',
-        '\$980.00',
-        '\$640.00'
-      ];
-      
-      _recentOrders.insert(0, {
-        'id': DateTime.now().millisecondsSinceEpoch,
-        'cliente': clientes[_random.nextInt(clientes.length)],
-        'fecha': horas[_random.nextInt(horas.length)],
-        'estado': 'Programado',
-        'productos': productos[_random.nextInt(productos.length)],
-        'direccion': direcciones[_random.nextInt(direcciones.length)],
-        'total': totales[_random.nextInt(totales.length)]
-      });
-    });
+    try {
+      // TODO: Reemplazar con llamadas reales a tus APIs
+      await Future.wait([
+        _loadKPIData(),
+        _loadChartData(),
+        _loadOrdersData(),
+        _loadAlertsData(),
+      ]);
+    } catch (e) {
+      // No mostramos error en refresh automático para no molestar al usuario
+      print('Error en refresh automático: $e');
+    }
+  }
+
+  // TODO: Implementar estas funciones con tus servicios reales
+  Future<void> _loadKPIData() async {
+    // Ejemplo de estructura JSON esperada:
+    /*
+    {
+      "active_orders": 12,
+      "upcoming_deliveries": 5,
+      "avg_humidity": 68.5,
+      "current_temperature": 24.3
+    }
+    */
     
-    // Mostrar notificación
+    // Simulación - reemplazar con:
+    // final response = await http.get(Uri.parse('https://tu-api.com/agricultor/kpi'));
+    // final data = json.decode(response.body);
+    
+    await Future.delayed(const Duration(milliseconds: 500)); // Remover esta línea
+    
+    setState(() {
+      _activeOrders = 0; // data['active_orders']
+      _upcomingDeliveries = 0; // data['upcoming_deliveries']
+      _avgHumidity = 0.0; // data['avg_humidity']
+      _currentTemperature = 0.0; // data['current_temperature']
+    });
+  }
+
+  Future<void> _loadChartData() async {
+    // Ejemplo de estructura JSON esperada:
+    /*
+    {
+      "humidity_data": [
+        {"x": 0, "y": 65.2},
+        {"x": 1, "y": 66.8},
+        ...
+      ],
+      "temperature_data": [
+        {"x": 0, "y": 23.1},
+        {"x": 1, "y": 23.8},
+        ...
+      ]
+    }
+    */
+    
+    // Simulación - reemplazar con:
+    // final response = await http.get(Uri.parse('https://tu-api.com/agricultor/chart-data'));
+    // final data = json.decode(response.body);
+    
+    await Future.delayed(const Duration(milliseconds: 300)); // Remover esta línea
+    
+    setState(() {
+      _humidityData.clear();
+      _temperatureData.clear();
+      
+      // data['humidity_data'].forEach((point) {
+      //   _humidityData.add(FlSpot(point['x'], point['y']));
+      // });
+      // data['temperature_data'].forEach((point) {
+      //   _temperatureData.add(FlSpot(point['x'], point['y']));
+      // });
+    });
+  }
+
+  Future<void> _loadOrdersData() async {
+    // Ejemplo de estructura JSON esperada:
+    /*
+    [
+      {
+        "id": 1,
+        "cliente": "Supermercado Oaxaca",
+        "fecha": "2024-01-15T10:00:00Z",
+        "estado": "en_camino",
+        "productos": "Tomates (50kg), Lechugas (30kg)",
+        "direccion": "Av. Principal 123, Oaxaca",
+        "total": 1250.00,
+        "telefono": "+1234567890",
+        "notas": "Entregar en recepción"
+      },
+      ...
+    ]
+    */
+    
+    // Simulación - reemplazar con:
+    // final response = await http.get(Uri.parse('https://tu-api.com/agricultor/orders'));
+    // final data = json.decode(response.body);
+    
+    await Future.delayed(const Duration(milliseconds: 400)); // Remover esta línea
+    
+    setState(() {
+      _recentOrders.clear();
+      // _recentOrders.addAll(data.map((order) => _parseOrder(order)).toList());
+    });
+  }
+
+  Future<void> _loadAlertsData() async {
+    // Ejemplo de estructura JSON esperada:
+    /*
+    [
+      {
+        "id": 1,
+        "tipo": "humedad_baja",
+        "mensaje": "Humedad crítica en Invernadero 2",
+        "nivel": "alto",
+        "fecha": "2024-01-15T08:30:00Z",
+        "detalles": "La humedad ha bajado al 45%. Se recomienda activar el sistema de riego.",
+        "resuelta": false,
+        "invernadero_id": 2,
+        "sensor_id": "S012"
+      },
+      ...
+    ]
+    */
+    
+    // Simulación - reemplazar con:
+    // final response = await http.get(Uri.parse('https://tu-api.com/agricultor/alerts'));
+    // final data = json.decode(response.body);
+    
+    await Future.delayed(const Duration(milliseconds: 350)); // Remover esta línea
+    
+    setState(() {
+      _alerts.clear();
+      // _alerts.addAll(data.map((alert) => _parseAlert(alert)).toList());
+    });
+  }
+
+  // TODO: Implementar función para parsear alertas
+  Map<String, dynamic> _parseAlert(Map<String, dynamic> alertData) {
+    return {
+      'id': alertData['id'],
+      'mensaje': alertData['mensaje'],
+      'nivel': _translateAlertLevel(alertData['nivel']),
+      'fecha': _formatDate(alertData['fecha']),
+      'detalles': alertData['detalles'],
+      'resuelta': alertData['resuelta'],
+      'rawData': alertData, // Mantener datos originales
+    };
+  }
+
+  // Utilidades para formateo
+  String _formatDate(String isoDate) {
+    // TODO: Implementar formateo de fecha según tu zona horaria
+    final date = DateTime.parse(isoDate);
+    return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  String _translateStatus(String status) {
+    // TODO: Mapear estados del backend a textos legibles
+    const statusMap = {
+      'programado': 'Programado',
+      'preparando': 'Preparando',
+      'en_camino': 'En camino',
+      'entregado': 'Entregado',
+      'cancelado': 'Cancelado',
+    };
+    return statusMap[status] ?? status;
+  }
+
+  String _translateAlertLevel(String level) {
+    // TODO: Mapear niveles del backend a textos legibles
+    const levelMap = {
+      'bajo': 'Bajo',
+      'medio': 'Medio',
+      'alto': 'Alto',
+      'critico': 'Crítico',
+    };
+    return levelMap[level] ?? level;
+  }
+
+  // Acciones
+  Future<void> _addNewOrder() async {
+    // TODO: Implementar creación de nuevo pedido
+    // Navigator.push(context, MaterialPageRoute(builder: (_) => CreateOrderPage()));
+    
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Nuevo pedido agregado a la base de datos'),
-        duration: Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
+      SnackBar(
+        content: const Text('Funcionalidad de crear pedido - Por implementar'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );
   }
 
-  void _resolveAlert(int alertId) {
+  Future<void> _resolveAlert(int alertId) async {
+    // TODO: Implementar resolución de alerta
+    // await http.put(Uri.parse('https://tu-api.com/alerts/$alertId/resolve'));
+    
     setState(() {
       final alertIndex = _alerts.indexWhere((alert) => alert['id'] == alertId);
       if (alertIndex != -1) {
         _alerts[alertIndex]['resuelta'] = true;
-        // Mover alerta resuelta al final
-        final resolvedAlert = _alerts.removeAt(alertIndex);
-        _alerts.add(resolvedAlert);
       }
     });
     
-    // Mostrar notificación
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Alerta marcada como resuelta'),
-        duration: Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
+      SnackBar(
+        content: const Text('Alerta marcada como resuelta'),
+        backgroundColor: Theme.of(context).colorScheme.tertiary,
       ),
     );
   }
 
-  void _deleteAlert(int alertId) {
+  Future<void> _deleteAlert(int alertId) async {
+    // TODO: Implementar eliminación de alerta
+    // await http.delete(Uri.parse('https://tu-api.com/alerts/$alertId'));
+    
     setState(() {
       _alerts.removeWhere((alert) => alert['id'] == alertId);
     });
     
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Alerta eliminada'),
-        duration: Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
+      SnackBar(
+        content: const Text('Alerta eliminada'),
+        backgroundColor: Theme.of(context).colorScheme.error,
       ),
     );
   }
@@ -332,174 +358,132 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     _pageController.jumpToPage(index);
   }
 
-  List<Map<String, dynamic>> get _filteredOrders {
-    if (_selectedOrderFilter == 'Todos') {
-      return _recentOrders;
-    }
-    return _recentOrders.where((order) => order['estado'] == _selectedOrderFilter).toList();
-  }
+@override
+void dispose() {
+  _refreshTimer?.cancel();
+  _pageController.dispose();
+  _searchController.dispose();
+  super.dispose();
+}
 
-  List<Map<String, dynamic>> get _searchedOrders {
-    final query = _searchController.text.toLowerCase();
-    if (query.isEmpty) {
-      return _filteredOrders;
-    }
-    return _filteredOrders.where((order) {
-      return order['cliente'].toLowerCase().contains(query) ||
-             order['productos'].toLowerCase().contains(query) ||
-             order['direccion'].toLowerCase().contains(query);
-    }).toList();
-  }
-
-  String _convertOrdersToCsv() {
-    final StringBuffer csv = StringBuffer();
-    csv.writeln('ID,Cliente,Fecha,Estado,Productos,Dirección,Total');
-    
-    for (final order in _recentOrders) {
-      csv.writeln('${order['id']},${order['cliente']},${order['fecha']},'
-          '${order['estado']},"${order['productos']}","${order['direccion']}",${order['total']}');
-    }
-    
-    return csv.toString();
-  }
-
-  void _exportOrders() {
-    final csvData = _convertOrdersToCsv();
-    // En una aplicación real, aquí usarías share_plus o file_saver
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Datos Exportados'),
-        content: SingleChildScrollView(
-          child: Text(
-            'Se han exportado ${_recentOrders.length} pedidos.\n\n'
-            'Pega estos datos en un archivo .csv:\n\n$csvData',
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+@override
+Widget build(BuildContext context) {
+  return AppShell(
+    title: 'Dashboard Agricultor',
+    actions: [
+      const _RoleSwitcherAction(), // Cambiado aquí
+      if (_isLoading)
+        const Padding(
+          padding: EdgeInsets.all(8.0),
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cerrar'),
-          ),
-        ],
+      IconButton(
+        icon: const Icon(Icons.refresh),
+        onPressed: _refreshData,
+        tooltip: 'Actualizar datos',
       ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    _pageController.dispose();
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard Agricultor - Tiempo Real'),
-        actions: [
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _updateData,
-            tooltip: 'Actualizar datos',
-          ),
-          IconButton(
-            icon: Icon(_isConnected ? Icons.cloud_done : Icons.cloud_off),
-            onPressed: () {
-              setState(() {
-                _isConnected = !_isConnected;
-                _connectionStatus = _isConnected ? 'Conectado' : 'Desconectado';
-              });
-            },
-            tooltip: _connectionStatus,
-          ),
-        ],
-      ),
-      body: _isLoading && _recentOrders.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : _errorMessage != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text(
-                        _errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _updateData,
-                        child: const Text('Reintentar'),
-                      ),
-                    ],
-                  ),
-                )
-              : PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _selectedIndex = index;
-                    });
-                  },
+    ],
+    body: _isLoading && _recentOrders.isEmpty
+        ? const Center(child: CircularProgressIndicator())
+        : _errorMessage != null
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Página 1: Dashboard principal
-                    _buildDashboardPage(),
-                    
-                    // Página 2: Pedidos
-                    _buildOrdersPage(),
-                    
-                    // Página 3: Alertas
-                    _buildAlertsPage(),
-                    
-                    // Página 4: Configuración
-                    _buildSettingsPage(),
+                    const Icon(Icons.error, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: _loadInitialData,
+                      child: const Text('Reintentar'),
+                    ),
                   ],
                 ),
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+              )
+            : Column(
+                children: [
+                  // Bottom Navigation Bar personalizado
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Theme.of(context).colorScheme.outline,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildNavItem(0, Icons.dashboard, 'Dashboard'),
+                        _buildNavItem(1, Icons.shopping_cart, 'Pedidos'),
+                        _buildNavItem(2, Icons.warning, 'Alertas'),
+                        _buildNavItem(3, Icons.settings, 'Configuración'),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _selectedIndex = index;
+                        });
+                      },
+                      children: [
+                        _buildDashboardPage(),
+                        _buildOrdersPage(),
+                        _buildAlertsPage(),
+                        _buildSettingsPage(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+  );
+}
+
+  Widget _buildNavItem(int index, IconData icon, String label) {
+    final isSelected = _selectedIndex == index;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Expanded(
+      child: Material(
+        color: isSelected ? colorScheme.primary.withOpacity(0.1) : Colors.transparent,
+        child: InkWell(
+          onTap: () => _onItemTapped(index),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Pedidos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.warning),
-            label: 'Alertas',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Configuración',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Colors.tealAccent,
-        unselectedItemColor: Colors.grey,
-        onTap: _onItemTapped,
+        ),
       ),
-      floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
-        onPressed: _addNewOrder,
-        backgroundColor: Colors.teal,
-        child: const Icon(Icons.add),
-      ) : null,
     );
   }
 
@@ -508,39 +492,14 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
     final recentOrders = _recentOrders.take(3).toList();
 
     return RefreshIndicator(
-      onRefresh: _updateData,
+      onRefresh: _loadInitialData,
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Estado de conexión
-              Row(
-                children: [
-                  Icon(
-                    _isConnected ? Icons.cloud_done : Icons.cloud_off,
-                    color: _isConnected ? Colors.green : Colors.red,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 5),
-                  Text(
-                    _connectionStatus,
-                    style: TextStyle(
-                      color: _isConnected ? Colors.green : Colors.red,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    'Actualizado: ${DateTime.now().toString().substring(11, 19)}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              
-              /// KPIs en tiempo real - Responsive
+              // KPIs
               LayoutBuilder(
                 builder: (context, constraints) {
                   if (constraints.maxWidth < 600) {
@@ -550,21 +509,21 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                           title: 'Pedidos activos', 
                           value: _activeOrders.toString(),
                           icon: Icons.shopping_cart,
-                          color: Colors.blueAccent,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         const SizedBox(height: 10),
                         KpiCard(
                           title: 'Próximas entregas', 
                           value: _upcomingDeliveries.toString(),
                           icon: Icons.local_shipping,
-                          color: Colors.greenAccent,
+                          color: Theme.of(context).colorScheme.secondary,
                         ),
                         const SizedBox(height: 10),
                         KpiCard(
                           title: 'Humedad Prom.', 
                           value: '${_avgHumidity.toStringAsFixed(1)}%',
                           icon: Icons.water_drop,
-                          color: Colors.tealAccent,
+                          color: Theme.of(context).colorScheme.tertiary,
                         ),
                       ],
                     );
@@ -576,19 +535,19 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                           title: 'Pedidos activos', 
                           value: _activeOrders.toString(),
                           icon: Icons.shopping_cart,
-                          color: Colors.blueAccent,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                         KpiCard(
                           title: 'Próximas entregas', 
                           value: _upcomingDeliveries.toString(),
                           icon: Icons.local_shipping,
-                          color: Colors.greenAccent,
+                          color: Theme.of(context).colorScheme.secondary,
                         ),
                         KpiCard(
                           title: 'Humedad Prom.', 
                           value: '${_avgHumidity.toStringAsFixed(1)}%',
                           icon: Icons.water_drop,
-                          color: Colors.tealAccent,
+                          color: Theme.of(context).colorScheme.tertiary,
                         ),
                       ],
                     );
@@ -597,7 +556,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
               ),
               const SizedBox(height: 20),
 
-              // Métricas en tiempo real
+              // Métricas
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -608,20 +567,21 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                         'Temperatura Actual',
                         '${_currentTemperature.toStringAsFixed(1)}°C',
                         Icons.thermostat,
-                        _currentTemperature > 28 ? Colors.redAccent : 
-                        _currentTemperature < 20 ? Colors.blueAccent : Colors.orangeAccent,
+                        Theme.of(context).colorScheme.primary,
                       ),
                       _buildMetricCard(
                         'Humedad Actual',
-                        '${(_avgHumidity + _random.nextDouble() * 5 - 2.5).toStringAsFixed(1)}%',
+                        '${_avgHumidity.toStringAsFixed(1)}%',
                         Icons.water_drop,
-                        _avgHumidity < 50 ? Colors.orangeAccent : Colors.tealAccent,
+                        Theme.of(context).colorScheme.tertiary,
                       ),
                       _buildMetricCard(
                         'Alertas Activas',
                         unresolvedAlerts.length.toString(),
                         Icons.warning,
-                        unresolvedAlerts.isEmpty ? Colors.green : Colors.redAccent,
+                        unresolvedAlerts.isEmpty ? 
+                          Theme.of(context).colorScheme.tertiary : 
+                          Theme.of(context).colorScheme.error,
                       ),
                     ],
                   ),
@@ -629,84 +589,88 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
               ),
               const SizedBox(height: 20),
 
-              /// Gráfico humedad y temperatura en tiempo real
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('🌡 Humedad y Temperatura últimas 24h',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  _buildIntervalSelector(),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 200,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: LineChart(
-                      LineChartData(
-                        gridData: FlGridData(show: true),
-                        titlesData: FlTitlesData(
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, meta) {
-                                // Mostrar etiquetas según el intervalo configurado
-                                if (value % _chartInterval == 0) {
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text('${value.toInt()}h', style: const TextStyle(fontSize: 10)),
-                                  );
-                                }
-                                return const Text('');
-                              },
+              // Gráfico
+              if (_humidityData.isNotEmpty && _temperatureData.isNotEmpty) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('🌡 Humedad y Temperatura',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    _buildIntervalSelector(),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 200,
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: LineChart(
+                        LineChartData(
+                          gridData: FlGridData(show: true),
+                          titlesData: FlTitlesData(
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (value, meta) {
+                                  if (value % _chartInterval == 0) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Text('${value.toInt()}h', style: const TextStyle(fontSize: 10)),
+                                    );
+                                  }
+                                  return const Text('');
+                                },
+                              ),
+                            ),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                getTitlesWidget: (value, meta) {
+                                  if (value % 20 == 0) {
+                                    return Text(value.toInt().toString(), style: const TextStyle(fontSize: 10));
+                                  }
+                                  return const Text('');
+                                },
+                              ),
                             ),
                           ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, meta) {
-                                if (value % 20 == 0) {
-                                  return Text(value.toInt().toString(), style: const TextStyle(fontSize: 10));
-                                }
-                                return const Text('');
-                              },
+                          borderData: FlBorderData(show: true),
+                          minX: 0,
+                          maxX: _humidityData.isEmpty ? 23 : _humidityData.last.x,
+                          minY: 0,
+                          maxY: 80,
+                          lineBarsData: [
+                            LineChartBarData(
+                              isCurved: true,
+                              spots: _humidityData,
+                              color: Theme.of(context).colorScheme.tertiary,
+                              barWidth: 3,
+                              belowBarData: BarAreaData(
+                                show: true, 
+                                color: Theme.of(context).colorScheme.tertiary.withOpacity(0.3)
+                              ),
                             ),
-                          ),
+                            LineChartBarData(
+                              isCurved: true,
+                              spots: _temperatureData,
+                              color: Theme.of(context).colorScheme.primary,
+                              barWidth: 3,
+                              belowBarData: BarAreaData(
+                                show: true, 
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.3)
+                              ),
+                            ),
+                          ],
                         ),
-                        borderData: FlBorderData(show: true),
-                        minX: 0,
-                        maxX: 23,
-                        minY: 0,
-                        maxY: 80,
-                        lineBarsData: [
-                          /// Línea de Humedad
-                          LineChartBarData(
-                            isCurved: true,
-                            spots: _humidityData,
-                            color: Colors.tealAccent,
-                            barWidth: 3,
-                            belowBarData: BarAreaData(show: true, color: Colors.tealAccent),
-                          ),
-                          /// Línea de Temperatura
-                          LineChartBarData(
-                            isCurved: true,
-                            spots: _temperatureData,
-                            color: Colors.orangeAccent,
-                            barWidth: 3,
-                            belowBarData: BarAreaData(show: true, color: Colors.orangeAccent),
-                          ),
-                        ],
                       ),
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 20),
+              ],
 
-              const SizedBox(height: 20),
-
-              /// Pedidos recientes
+              // Pedidos recientes
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -720,38 +684,40 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                 ],
               ),
               const SizedBox(height: 10),
-              ...recentOrders.map((pedido) => PedidoTile(
-                pedido: pedido,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => OrderDetailPage(pedido: pedido),
+              if (recentOrders.isNotEmpty) ...[
+                ...recentOrders.map((pedido) => PedidoTile(
+                  pedido: pedido,
+                  onTap: () => context.push('/pedidos/${pedido['id']}'),
+                )),
+                if (_recentOrders.length > 3)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedIndex = 1;
+                      });
+                      _pageController.jumpToPage(1);
+                    },
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Ver todos los pedidos'),
+                        Icon(Icons.arrow_forward, size: 16),
+                      ],
                     ),
-                  );
-                },
-              )),
-              const SizedBox(height: 10),
-              if (_recentOrders.length > 3)
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _selectedIndex = 1;
-                    });
-                    _pageController.jumpToPage(1);
-                  },
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Ver todos los pedidos'),
-                      Icon(Icons.arrow_forward, size: 16),
-                    ],
+                  ),
+              ] else
+                const Card(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Center(
+                      child: Text('No hay pedidos recientes'),
+                    ),
                   ),
                 ),
 
               const SizedBox(height: 20),
 
-              /// Alertas activas
+              // Alertas activas
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -759,7 +725,7 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   Badge(
                     label: Text(unresolvedAlerts.length.toString()),
-                    backgroundColor: Colors.red,
+                    backgroundColor: Theme.of(context).colorScheme.error,
                     child: IconButton(
                       icon: const Icon(Icons.notifications, size: 20),
                       onPressed: () {
@@ -774,18 +740,12 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                 ],
               ),
               const SizedBox(height: 10),
-              ...unresolvedAlerts.take(2).map((alerta) => AlertTile(
-                alerta: alerta,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AlertDetailPage(alerta: alerta),
-                    ),
-                  );
-                },
-              )),
-              if (unresolvedAlerts.isEmpty)
+              if (unresolvedAlerts.isNotEmpty) 
+                ...unresolvedAlerts.take(2).map((alerta) => AlertTile(
+                  alerta: alerta,
+                  onTap: () => context.push('/alertas/${alerta['id']}'),
+                ))
+              else
                 const Card(
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
@@ -814,7 +774,6 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
             const Text('📦 Todos los Pedidos', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Row(children: [
               IconButton(icon: const Icon(Icons.add), onPressed: _addNewOrder),
-              IconButton(icon: const Icon(Icons.download), onPressed: _exportOrders),
             ]),
           ],
         ),
@@ -866,15 +825,12 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                   ),
                 )
               : RefreshIndicator(
-                  onRefresh: _updateData,
+                  onRefresh: _loadInitialData,
                   child: ListView.builder(
                     itemCount: _searchedOrders.length,
                     itemBuilder: (_, i) => PedidoTile(
                       pedido: _searchedOrders[i],
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => OrderDetailPage(pedido: _searchedOrders[i])),
-                      ),
+                      onTap: () => context.push('/pedidos/${_searchedOrders[i]['id']}'),
                     ),
                   ),
                 ),
@@ -898,7 +854,10 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
             const SizedBox(width: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.error,
+                borderRadius: BorderRadius.circular(12)
+              ),
               child: Text(unresolved.length.toString(), style: const TextStyle(color: Colors.white, fontSize: 12)),
             ),
           ]),
@@ -917,29 +876,27 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
                   ),
                 )
               : RefreshIndicator(
-                  onRefresh: _updateData,
+                  onRefresh: _loadInitialData,
                   child: ListView(
                     children: [
                       ...unresolved.map((a) => AlertTile(
                             alerta: a,
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (_) => AlertDetailPage(alerta: a)),
-                            ),
+                            onTap: () => context.push('/alertas/${a['id']}'),
                             onResolve: () => _resolveAlert(a['id']),
                             onDelete: () => _deleteAlert(a['id']),
                           )),
                       if (resolved.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        const Text('Alertas Resueltas',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
+                        Text('Alertas Resueltas',
+                            style: TextStyle(
+                              fontSize: 16, 
+                              fontWeight: FontWeight.bold, 
+                              color: Theme.of(context).colorScheme.tertiary
+                            )),
                         const SizedBox(height: 10),
                         ...resolved.map((a) => AlertTile(
                               alerta: a,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => AlertDetailPage(alerta: a)),
-                              ),
+                              onTap: () => context.push('/alertas/${a['id']}'),
                               onDelete: () => _deleteAlert(a['id']),
                             )),
                       ],
@@ -957,63 +914,38 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('⚙️ Configuración', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 20),
-
         Card(
           child: ListTile(
-            leading: const Icon(Icons.cloud, color: Colors.tealAccent),
-            title: const Text('Estado de Conexión'),
-            subtitle: Text(_connectionStatus),
-            trailing: Switch(
-              value: _isConnected,
-              onChanged: (v) => setState(() {
-                _isConnected = v;
-                _connectionStatus = v ? 'Conectado' : 'Desconectado';
-              }),
-              activeThumbColor: Colors.teal,
-            ),
-          ),
-        ),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.notifications, color: Colors.orangeAccent),
+            leading: const Icon(Icons.notifications),
             title: const Text('Notificaciones'),
             subtitle: const Text('Configurar alertas y notificaciones'),
             trailing: const Icon(Icons.arrow_forward),
-            onTap: _showNotificationSettings,
+            onTap: () => _showNotificationSettings(context),
           ),
         ),
         Card(
           child: ListTile(
-            leading: const Icon(Icons.bar_chart, color: Colors.purpleAccent),
+            leading: const Icon(Icons.bar_chart),
             title: const Text('Preferencias de Gráficos'),
             subtitle: const Text('Personalizar visualización de datos'),
             trailing: const Icon(Icons.arrow_forward),
-            onTap: _showChartSettings,
+            onTap: () => _showChartSettings(context),
           ),
         ),
         Card(
           child: ListTile(
-            leading: const Icon(Icons.data_usage, color: Colors.greenAccent),
+            leading: const Icon(Icons.data_usage),
             title: const Text('Sincronización de Datos'),
             subtitle: const Text('Configurar frecuencia de actualización'),
             trailing: const Icon(Icons.arrow_forward),
-            onTap: _showSyncSettings,
-          ),
-        ),
-        Card(
-          child: ListTile(
-            leading: const Icon(Icons.info, color: Colors.blueAccent),
-            title: const Text('Acerca de'),
-            subtitle: const Text('Información de la aplicación'),
-            trailing: const Icon(Icons.arrow_forward),
-            onTap: () => _showAboutDialog(context),
+            onTap: () => _showSyncSettings(context),
           ),
         ),
       ]),
     );
   }
 
-  // ---------- diálogos / util ----------
+  // Utilidades
   Widget _buildIntervalSelector() {
     return DropdownButton<double>(
       value: _chartInterval,
@@ -1022,106 +954,6 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
           .map((i) => DropdownMenuItem<double>(value: i, child: Text('Cada ${i.toInt()}h')))
           .toList(),
       onChanged: (v) => setState(() => _chartInterval = v!),
-    );
-  }
-
-  void _showNotificationSettings() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Configuración de Notificaciones'),
-        content: const SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Aquí puedes configurar tus preferencias de notificaciones:'),
-              SizedBox(height: 15),
-              ListTile(leading: Icon(Icons.water_drop, color: Colors.teal), title: Text('Alertas de humedad')),
-              ListTile(leading: Icon(Icons.thermostat, color: Colors.orange), title: Text('Alertas de temperatura')),
-              ListTile(leading: Icon(Icons.shopping_cart, color: Colors.blue), title: Text('Notificaciones de pedidos')),
-              ListTile(leading: Icon(Icons.timer, color: Colors.green), title: Text('Recordatorios')),
-            ],
-          ),
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
-      ),
-    );
-  }
-
-  void _showChartSettings() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Configuración de Gráficos'),
-        content: const SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Personaliza la visualización de los gráficos:'),
-              SizedBox(height: 15),
-              ListTile(leading: Icon(Icons.timeline, color: Colors.purple), title: Text('Tipo de gráfico: Línea')),
-              ListTile(leading: Icon(Icons.palette, color: Colors.purple), title: Text('Colores del tema: Automático')),
-              ListTile(leading: Icon(Icons.straighten, color: Colors.purple), title: Text('Unidades de medida: Métrico')),
-            ],
-          ),
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
-      ),
-    );
-  }
-
-  void _showSyncSettings() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Sincronización de Datos'),
-        content: const SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Configura la frecuencia de actualización:'),
-              SizedBox(height: 15),
-              ListTile(leading: Icon(Icons.update, color: Colors.green), title: Text('Tiempo real: 3 segundos')),
-              ListTile(leading: Icon(Icons.update, color: Colors.green), title: Text('Cada 30 segundos (balanceado)')),
-              ListTile(leading: Icon(Icons.update, color: Colors.green), title: Text('Cada 5 minutos (ahorro)')),
-              ListTile(leading: Icon(Icons.settings, color: Colors.green), title: Text('Manual: solo al actualizar')),
-            ],
-          ),
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
-      ),
-    );
-  }
-
-  void _showAboutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Acerca de'),
-        content: const SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Dashboard Agricultor v1.0.0'),
-              SizedBox(height: 10),
-              Text('Aplicación para monitoreo en tiempo real de datos agrícolas.'),
-              SizedBox(height: 15),
-              Text('Características:'),
-              Text('• Monitoreo de humedad y temperatura'),
-              Text('• Gestión de pedidos en tiempo real'),
-              Text('• Sistema de alertas inteligentes'),
-              Text('• Interfaz responsive y moderna'),
-              Text('• Búsqueda y filtrado avanzado'),
-              SizedBox(height: 10),
-              Text('Desarrollado con Flutter y Dart'),
-            ],
-          ),
-        ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
-      ),
     );
   }
 
@@ -1136,8 +968,42 @@ class _AgricultorHomePageState extends State<AgricultorHomePage> {
       ],
     );
   }
+
+  void _showNotificationSettings(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Configuración de Notificaciones'),
+        content: const Text('Aquí puedes configurar tus preferencias de notificaciones.'),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+      ),
+    );
+  }
+
+  void _showChartSettings(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Configuración de Gráficos'),
+        content: const Text('Personaliza la visualización de los gráficos.'),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+      ),
+    );
+  }
+
+  void _showSyncSettings(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Sincronización de Datos'),
+        content: const Text('Configura la frecuencia de actualización de datos.'),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cerrar'))],
+      ),
+    );
+  }
 }
 
+// Widgets auxiliares (mantener los mismos que antes)
 class KpiCard extends StatelessWidget {
   final String title;
   final String value;
@@ -1265,60 +1131,5 @@ class AlertTile extends StatelessWidget {
       default:
         return Colors.yellow;
     }
-  }
-}
-
-class OrderDetailPage extends StatelessWidget {
-  final Map<String, dynamic> pedido;
-
-  const OrderDetailPage({super.key, required this.pedido});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Detalle del Pedido')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Cliente: ${pedido['cliente']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Text('Fecha: ${pedido['fecha']}'),
-            Text('Estado: ${pedido['estado']}'),
-            Text('Productos: ${pedido['productos']}'),
-            Text('Dirección: ${pedido['direccion']}'),
-            Text('Total: ${pedido['total']}'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class AlertDetailPage extends StatelessWidget {
-  final Map<String, dynamic> alerta;
-
-  const AlertDetailPage({super.key, required this.alerta});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Detalle de Alerta')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Mensaje: ${alerta['mensaje']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            Text('Nivel: ${alerta['nivel']}'),
-            Text('Fecha: ${alerta['fecha']}'),
-            Text('Detalles: ${alerta['detalles']}'),
-            Text('Resuelta: ${alerta['resuelta'] ? 'Sí' : 'No'}'),
-          ],
-        ),
-      ),
-    );
   }
 }

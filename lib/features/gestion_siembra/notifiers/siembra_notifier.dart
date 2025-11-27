@@ -16,16 +16,12 @@ class SiembraNotifier extends ChangeNotifier {
   bool get isLoading => _isLoading;
   List<SiembraModel> get siembras => _siembras;
 
-  /// Revisar si un número de lote ya existente en la lista.
   bool checkLoteExists(int lote, {String? siembraIdToIgnore}) {
     return _siembras.any((siembra) {
-      // Condición 1: ¿Es el mismo número de lote?
       final bool isSameLote = siembra.lote == lote;
 
-      // Condición 2: ¿Es un item DIFERENTE al que estamos editando?
       final bool isDifferentItem = siembra.id != siembraIdToIgnore;
 
-      // Es un duplicado si es el mismo lote Y un item diferente
       return isSameLote && isDifferentItem;
     });
   }
@@ -45,9 +41,9 @@ class SiembraNotifier extends ChangeNotifier {
 
   Future<void> addSiembra(SiembraModel nuevaSiembra) async {
     try {
-      _repository.addSiembra(nuevaSiembra); // Llama al repo (sin await)
-      _siembras.add(nuevaSiembra); // Añade a la lista local
-      notifyListeners(); // Notifica a la UI
+      _repository.addSiembra(nuevaSiembra); 
+      _siembras.add(nuevaSiembra); 
+      notifyListeners();
     } catch (e) {
       log('Error al añadir la siembra: $e');
     }
@@ -57,12 +53,12 @@ class SiembraNotifier extends ChangeNotifier {
     try {
       _repository.actualizarSiembra(
         siembraActualizada,
-      ); // Llama al repo (sin await)
+      );
 
       final index = _siembras.indexWhere((s) => s.id == siembraActualizada.id);
       if (index != -1) {
-        _siembras[index] = siembraActualizada; // Actualiza lista local
-        notifyListeners(); // Notifica a la UI
+        _siembras[index] = siembraActualizada;
+        notifyListeners();
       }
     } catch (e) {
       log('Error al actualizar la siembra: $e');
@@ -71,9 +67,9 @@ class SiembraNotifier extends ChangeNotifier {
 
   Future<void> eliminarSiembra(String id) async {
     try {
-      _repository.eliminarSiembra(id); // Llama al repo (sin await)
-      _siembras.removeWhere((s) => s.id == id); // Elimina de lista local
-      notifyListeners(); // Notifica a la UI
+      _repository.eliminarSiembra(id);
+      _siembras.removeWhere((s) => s.id == id);
+      notifyListeners();
     } catch (e) {
       log('Error al eliminar la siembra: $e');
     }

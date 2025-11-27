@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-// ignore: unused_element
-final ThemeData _industrialDarkTheme = ThemeData(
+final ThemeData industrialDarkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
   scaffoldBackgroundColor: const Color(0xFF1F2A30),

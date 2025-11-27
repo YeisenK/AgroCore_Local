@@ -28,8 +28,7 @@ class _SplashPageState extends State<SplashPage> {
       if (!mounted) return;
       setState(() => _currentPhrase = (_currentPhrase + 1) % _phrases.length);
     });
-    // 👇 Nada de bootstrap ni context.go aquí.
-    // El GoRouter con redirect basado en AuthStatus se encarga de navegar.
+
   }
 
   @override
@@ -69,7 +68,6 @@ class _SplashPageState extends State<SplashPage> {
               ),
             ),
             const SizedBox(height: 12),
-            // Debug opcional para ver el estado actual (puedes quitarlo)
             Text(
               'Estado: $status',
               style: const TextStyle(color: Colors.white38, fontSize: 12),

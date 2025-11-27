@@ -1,4 +1,3 @@
-// lib/app/data/auth/auth_controller.dart
 import 'package:flutter/foundation.dart';
 import 'auth_repository.dart';
 
